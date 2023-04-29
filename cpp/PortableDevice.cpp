@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "PortableDevice.h"
 #include "PortableDeviceManager.h"
+#include "PortableDeviceContentJ.h"
 #include <PortableDeviceApi.h>
 #include <PortableDevice.h>
 #include <iostream>
@@ -10,23 +11,48 @@
 #include <propsys.h>
 #include <atlcomcli.h>
 #include <atlbase.h>
+#include <vector>
 using namespace std;
 
+IPortableDeviceProperties* pProperties;
+
+BOOL isOpen = false;
 IPortableDevice* pPortableDevice;
 IPortableDeviceValues* pClientValues;
+IPortableDevicePropVariantCollection* propVariantCollections = nullptr;
+//
+PortableDeviceContentJ* content;
 
+IPortableDeviceProperties* getPDProperties() {
+
+    return pProperties;
+}
+
+void initializePropVariantCollection() {
+    if (propVariantCollections == nullptr) {
+        HRESULT hr = CoCreateInstance(CLSID_PortableDevicePropVariantCollection, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&propVariantCollections));
+        if (FAILED(hr)) {
+            // handle error
+        }
+    }
+}
+
+IPortableDevicePropVariantCollection* getPropVariantCollection() {
+    initializePropVariantCollection();
+    return propVariantCollections;
+}
 IPortableDeviceValues* getPortableDeviceValues()
 {
     HRESULT hr = InitializePortableDeviceValues();
     if (FAILED(hr)) {
         cout << "Failed to initialize device values" << endl;
     }
+
     return pClientValues;
 }
 
 HRESULT InitializePortableDeviceValues()
 {
-    CoInitialize(nullptr);
     if (pClientValues == nullptr)
     {
         HRESULT hr = CoCreateInstance(CLSID_PortableDeviceValues,
@@ -39,15 +65,14 @@ HRESULT InitializePortableDeviceValues()
             return hr;
         }
     }
-    CoUninitialize();
     return S_OK;
 }
 
-void ReleasePortableDeviceValues() {
+void releasePortableDeviceValues() {
     if (pClientValues != nullptr)
     {
+        pClientValues->Release();
         pClientValues = nullptr;
-        return;
     }
 }
 
@@ -62,7 +87,9 @@ IPortableDevice* getPortableDevice()
 
 HRESULT InitializePortableDevice()
 {
-    CoInitialize(nullptr);
+    if (!SUCCEEDED(CoInitialize(nullptr))) {
+        cout << "Failed to initialize" << endl;
+    }
     if (pPortableDevice == nullptr)
     {
         HRESULT hr = CoCreateInstance(CLSID_PortableDeviceFTM,
@@ -74,7 +101,8 @@ HRESULT InitializePortableDevice()
             return hr;
         }
     }
-    CoUninitialize();
+    // initialize content
+
     return S_OK;
 }
 
@@ -152,46 +180,45 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
 
 JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getProperties
 (JNIEnv* env, jclass, jstring deviceID) {
+    IPortableDeviceContent* pContent;
+
     LPWSTR wszDeviceID;
     LPWSTR wszFirmwareVersion = NULL;
     DWORD dwFirmwareVersionLength{};
     PROPERTYKEY guidFirmwareVersion = WPD_DEVICE_FIRMWARE_VERSION;
     wszDeviceID = (WCHAR*)env->GetStringChars(deviceID, NULL);
+    HRESULT hr;
 
     // Get the device manager
     IPortableDevice* pDevice = nullptr;
     pDevice = getPortableDevice();
-    HRESULT hr = OpenDevice(wszDeviceID, &pDevice, L"Java Mtp Library", 1, 0, 0);
-    if (FAILED(hr))
-    {
-        cout << "mtp:2 hr failed hr = " << hr << endl;
-        // Handle error
-        pDevice->Release();
-        return nullptr;
+    if (!isOpen) {
+        hr = OpenDevice(wszDeviceID, &pDevice, L"Java Mtp Library", 1, 0, 0);
+        if (FAILED(hr))
+        {
+            cout << "mtp:2 hr failed hr = " << hr << endl;
+            // Handle error
+            return nullptr;
+        }
     }
-
     // Get the device properties
-    IPortableDeviceContent* pContent = nullptr;
     hr = pDevice->Content(&pContent);
     if (FAILED(hr))
     {
         cout << "mtp:3 hr failed hr = " << hr << endl;
         // Handle error
-        pDevice->Close();
-        pDevice->Release();
         return nullptr;
     }
 
-   
-    IPortableDeviceProperties* pProperties = nullptr;
+    PortableDeviceContentJ* content = new PortableDeviceContentJ(pContent, wszDeviceID);
+
+    pProperties = nullptr;
     hr = pContent->Properties(&pProperties);
     if (FAILED(hr))
     {
         cout << "mtp:4 hr failed hr = " << hr << endl;
         // Handle error
         pContent->Release();
-        pDevice->Close();
-        pDevice->Release();
         return nullptr;
     }
 
@@ -207,16 +234,10 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
         cout << "mtp:6 hr failed hr = " << hr << endl;
         // Handle error
         pProperties->Release();
-        pContent->Release();
-        pDevice->Close();
-        pDevice->Release();
         return nullptr;
     }
     jobject map = GetKeyAndValuesMap(env, deviceKeys, &deviceValues);
-    pProperties->Release();
     pContent->Release();
-    pDevice->Close();
-    pDevice->Release();
     return map;
 }
 
@@ -228,7 +249,7 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
     jmethodID init = env->GetMethodID(mapClass, "<init>", "()V");
     jobject hashMap = env->NewObject(mapClass, init);
     jmethodID put = env->GetMethodID(mapClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-    DWORD size;
+    DWORD size = 0;
     HRESULT hr = keys->GetCount(&size);
 
 
@@ -362,24 +383,28 @@ HRESULT OpenDevice(LPCWSTR wszPnPDeviceID, IPortableDevice** ppDevice, LPCWSTR c
         ClientInfoHR = pClientInformation->SetStringValue(WPD_CLIENT_NAME, clientName);
         if (FAILED(ClientInfoHR))
         {
+            cout << "here3" << endl;
             // Failed to set WPD_CLIENT_NAME
         }
 
         ClientInfoHR = pClientInformation->SetUnsignedIntegerValue(WPD_CLIENT_MAJOR_VERSION, majorV);
         if (FAILED(ClientInfoHR))
         {
+            cout << "here4" << endl;
             // Failed to set WPD_CLIENT_MAJOR_VERSION
         }
 
         ClientInfoHR = pClientInformation->SetUnsignedIntegerValue(WPD_CLIENT_MINOR_VERSION, minorV);
         if (FAILED(ClientInfoHR))
         {
+            cout << "here5" << endl;
             // Failed to set WPD_CLIENT_MINOR_VERSION
         }
 
         ClientInfoHR = pClientInformation->SetUnsignedIntegerValue(WPD_CLIENT_REVISION, clientRevision);
         if (FAILED(ClientInfoHR))
         {
+            cout << "here6" << endl;
             // Failed to set WPD_CLIENT_REVISION
         }
 
@@ -392,20 +417,15 @@ HRESULT OpenDevice(LPCWSTR wszPnPDeviceID, IPortableDevice** ppDevice, LPCWSTR c
     if (SUCCEEDED(hr))
     {
         // CoCreate an IPortableDevice interface
-        hr = CoCreateInstance(CLSID_PortableDeviceFTM,
-            NULL,
-            CLSCTX_INPROC_SERVER,
-            IID_IPortableDevice,
-            (VOID**)&pDevice);
-
-        if (SUCCEEDED(hr))
-        {
+        pDevice = getPortableDevice();
+        
             // Attempt to open the device using the PnPDeviceID string given
             // to this function and the newly created client information.
             // Note that we're attempting to open the device the first 
             // time using the default (read/write) access. If this fails
             // with E_ACCESSDENIED, we'll attempt to open a second time
             // with read-only access.
+            ULONG val;
             hr = pDevice->Open(wszPnPDeviceID, pClientInformation);
             if (hr == E_ACCESSDENIED)
             {
@@ -414,17 +434,18 @@ HRESULT OpenDevice(LPCWSTR wszPnPDeviceID, IPortableDevice** ppDevice, LPCWSTR c
                     WPD_CLIENT_DESIRED_ACCESS,
                     GENERIC_READ);
                 hr = pDevice->Open(wszPnPDeviceID, pClientInformation);
+                isOpen = true;
             }
             if (SUCCEEDED(hr))
             {
                 // The device successfully opened, obtain an instance of the Device into
                 // ppDevice so the caller can be returned an opened IPortableDevice.
                 hr = pDevice->QueryInterface(IID_IPortableDevice, (VOID**)ppDevice);
+                isOpen = true;
                 if (FAILED(hr))
                 {
                     // Failed to QueryInterface the opened IPortableDevice
-                }
-            }
+                }         
         }
         else
         {
@@ -432,35 +453,28 @@ HRESULT OpenDevice(LPCWSTR wszPnPDeviceID, IPortableDevice** ppDevice, LPCWSTR c
         }
     }
 
-    // Release the IPortableDevice when finished
-    if (pDevice != NULL)
-    {
-        pDevice->Release();
-        pDevice = NULL;
-    }
-
     // Release the IPortableDeviceValues that contains the client information when finished
     if (pClientInformation != NULL)
     {
-        pClientInformation->Release();
-        pClientInformation = NULL;
     }
 
     return hr;
 }
-
-JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_open
+JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_openN
 (JNIEnv* env, jobject obj) {
     HRESULT hr;
     IPortableDevice* pDevice;
     LPWSTR wszDeviceID;
     jfieldID fid;
     jstring jsDeviceID;
-    ReleasePortableDeviceValues();
+    releasePortableDeviceValues();
     pDevice = getPortableDevice();
     fid = env->GetFieldID(env->GetObjectClass(obj), "deviceID", "Ljava/lang/String;");
     jsDeviceID = (jstring)env->GetObjectField(obj, fid);
     wszDeviceID = (WCHAR*)env->GetStringChars(jsDeviceID, NULL);
+    if (isOpen) {
+        return;
+    }
     hr = OpenDevice(wszDeviceID, &pDevice, L"Unknown-MtpLibJava", 1, 0, 0);
     if (FAILED(hr))
     {
@@ -468,7 +482,7 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_ope
     }
 }
 
-JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_close
+JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_closeN
 (JNIEnv* env, jobject obj) {
     IPortableDevice* pDevice;
     LPWSTR wszDeviceID;
@@ -480,9 +494,107 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_clo
     jsDeviceID = (jstring)env->GetObjectField(obj, fid);
     wszDeviceID = (WCHAR*)env->GetStringChars(jsDeviceID, NULL);
     pDevice->Close();
+    isOpen = false;
    
 }
 
 JNIEXPORT jobjectArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getRootObjects
-(JNIEnv*, jobject);
+(JNIEnv* env, jobject cls) {
+    IPortableDeviceContent* pContent;
 
+    // prop variant collections of ids
+    IPortableDevicePropVariantCollection* pPropCollections;
+
+    // device id
+    jfieldID deviceIDField;
+    // java device id
+    jstring jdeviceID;
+    // wide string device id
+    LPWSTR wszDeviceID;
+    // portable device object stuff
+    IPortableDevice* pDevice;
+    jclass portableObjectClass = env->FindClass("java/util/HashMap");
+    jmethodID init = env->GetMethodID(portableObjectClass, "<init>", "()V");
+    pDevice = getPortableDevice();
+    // initalize device id
+    deviceIDField = env->GetFieldID(env->GetObjectClass(cls), "deviceID", "Ljava/lang/String;");
+    jdeviceID = (jstring)env->GetObjectField(cls, deviceIDField);
+    wszDeviceID = (WCHAR*)env->GetStringChars(jdeviceID, nullptr);
+
+    // initalaize prop variant collections
+    pPropCollections = getPropVariantCollection();
+
+            //jobject portableDeviceObject = env->NewObject(portableObjectClass, init);
+    
+    // get root objects
+    HRESULT hr = pDevice->Content(&pContent);
+    if (FAILED(hr)) {
+        cout << "pDevice->Content failed: " << hr << endl;
+        // Handle the error
+        return nullptr;
+    }
+    
+    IEnumPortableDeviceObjectIDs* pEnum = nullptr;
+    hr = pContent->EnumObjects(0, WPD_DEVICE_OBJECT_ID, nullptr, &pEnum);
+    if (FAILED(hr)) {
+        cout << "pDeviceContent->EnumObjects failed: " << hr << endl;
+        // Handle the error        pContent->Release();
+        return nullptr;
+    }
+    DWORD dwFetched = 0;
+    LPWSTR szObjectID = nullptr;
+    vector<LPWSTR> objectIDs;
+    DWORD objSize = 0;
+    jobjectArray strarr = env->NewObjectArray(1, env->FindClass("com/github/hms11rn/mtp/win32/content/PortableDeviceObjectWin32"), nullptr);
+    while (SUCCEEDED(pEnum->Next(1, &szObjectID, &dwFetched)) && (dwFetched > 0)) {
+        objSize++;
+        objectIDs.push_back(szObjectID);
+        env->SetObjectArrayElement(strarr, 0, content->getObject(szObjectID, env));
+        CoTaskMemFree(szObjectID);
+        szObjectID = nullptr;
+    }
+    pEnum->Release();
+    pPropCollections->Clear();
+    return strarr;
+
+    
+    for (const auto& id : objectIDs) {
+     //   PortableDeviceObjectJ* portableDeviceObject = content.getObject(id, env);
+    }
+    if (objSize == 0) {
+        jobjectArray strarr = env->NewObjectArray(0, env->FindClass("com/github/hms11rn/mtp/win32/content/PortableDeviceObjectWin32"), nullptr);
+        return strarr;
+    }
+    pContent->Release();
+    return nullptr;
+}
+
+/*
+ PROPVARIANT varPUIID = {};
+        PropVariantInit(&varPUIID);
+        varPUIID.vt = VT_LPWSTR;
+        varPUIID.pwszVal = id;
+        pPropCollections->Add(&varPUIID);
+
+*/
+jobjectArray convertIDToPortableDeviceObject(JNIEnv* env, jobject cls, IPortableDevicePropVariantCollection* coll, IPortableDeviceContent* pContent) {
+    HRESULT hr;
+    // java device id
+    jfieldID deviceIDField;
+    jstring jdeviceID;
+    LPWSTR wszDeviceID;
+    deviceIDField = env->GetFieldID(env->GetObjectClass(cls), "deviceID", "Ljava/lang/String;");
+    jdeviceID = (jstring)env->GetObjectField(cls, deviceIDField);
+    wszDeviceID = (WCHAR*)env->GetStringChars(jdeviceID, nullptr);
+    // ===========
+    DWORD collSize;
+    coll->GetCount(&collSize);
+    for (int i = 0; i < collSize; i++) {
+        PROPVARIANT vt;
+        coll->GetAt(i, &vt);
+        if (vt.puuid == &WPD_CONTENT_TYPE_FOLDER) {
+
+        }
+    }
+    return nullptr;
+}

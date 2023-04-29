@@ -1,16 +1,23 @@
 package com.github.hms11rn.mtp.win32.content;
 
+import com.github.hms11rn.mtp.DeviceProperties;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.Map;
 
 class PortableDeviceObjectWin32 implements PortableDeviceObject {
 
     String id;
     protected PortableDeviceObjectWin32(String id) {
         this.id = id;
+        init(id);
     }
+
+    public native Map<String, DeviceProperties.PropertyValue> getProperties();
+
+    public native void init(String id);
 
     @Override
     public String getId() {
@@ -91,4 +98,5 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
     public String getContentType() {
         return null;
     }
+
 }

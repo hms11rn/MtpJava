@@ -11,6 +11,12 @@ class PropertiesWin32 {
     protected static Guid WPD_DEVICE_SUPPORTS_NON_CONSUMABLE = new Guid("{26D4979A-E643-4626-9E2B-736DC0C92FDC}",10);
     protected static Guid WPD_DEVICE_SYNC_PARTNER = new Guid("{26D4979A-E643-4626-9E2B-736DC0C92FDC}", 2);
 
+    protected static Guid WPD_OBJECT_ID = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 2);
+    protected static Guid WPD_OBJECT_CONTAINER_FUNCTIONAL_OBJECT_ID = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 23);
+    protected static Guid WPD_OBJECT_PERSISTENT_UNIQUE_ID = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 5);
+    protected static Guid WPD_OBJECT_NAME = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 4);
+
+    protected static Guid WPD_OBJECT_CONTENT_TYPE = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 7);
     protected static String getGuid(String name) {
         if (name.equals("WPD_DEVICE_MANUFACTURER"))
             return WPD_DEVICE_MANUFACTURER.toString();
@@ -28,6 +34,24 @@ class PropertiesWin32 {
             return WPD_DEVICE_SUPPORTS_NON_CONSUMABLE.toString();
         if (name.equals("WPD_DEVICE_SYNC_PARTNER"))
             return WPD_DEVICE_SYNC_PARTNER.toString();
+
+        // Portable device Object information
+        if (name.equals("WPD_OBJECT_CONTENT_TYPE"))
+            return WPD_OBJECT_CONTENT_TYPE.toString();
+        if (name.equals(("WPD_OBJECT_PERSISTENT_UNIQUE_ID")))
+            return WPD_OBJECT_PERSISTENT_UNIQUE_ID.toString();
+        if (name.equals("WPD_OBJECT_CONTAINER_FUNCTIONAL_OBJECT_ID"))
+            return WPD_OBJECT_CONTAINER_FUNCTIONAL_OBJECT_ID.toString();
+        if (name.equals("WPD_OBJECT_NAME"))
+            return WPD_OBJECT_NAME.toString();
+        if (name.equals("WPD_OBJECT_ID"))
+            return WPD_OBJECT_ID.toString();
+
         return null;
     }
 }
+
+/*
+TODO
+WPD_OBJECT_FORMAT
+ */

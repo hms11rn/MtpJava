@@ -42,7 +42,6 @@ void ReleaseDeviceManager()
     if (pDeviceManager != nullptr) {
         pDeviceManager->Release();
         pDeviceManager = nullptr;
-        CoUninitialize();
     }
 }
 
@@ -66,10 +65,9 @@ void ReleaseDeviceManager()
 
  jobjectArray getDeviceHWID(JNIEnv *env) {     
      jobjectArray deviceNames;
-
      DWORD size;
 
-     HRESULT hr = getDeviceManager()->GetDevices(nullptr, &size); // ive seen some of this code in jmtp library its not all mine
+     HRESULT hr = getDeviceManager()->GetDevices(nullptr, &size);
      if (FAILED(hr)) {
          std::cout << "hr2 failed, hr = " << std::hex << hr << std::endl;
          return nullptr;

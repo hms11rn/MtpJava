@@ -125,6 +125,12 @@
       <EnableUAC>false</EnableUAC>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);PortableDeviceGuids.lib;Propsys.lib;</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>C:\Users\hmsel\git\CPP\jmtp\cpp\x64\prebuild.bat</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Delete dll</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -145,13 +151,22 @@
       <EnableUAC>false</EnableUAC>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);PortableDeviceGuids.lib;Propsys.lib;</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>C:\Users\hmsel\git\CPP\jmtp\cpp\x64\prebuild.bat</Command>
+    </PreBuildEvent>
+    <PreBuildEvent>
+      <Message>Delete dll</Message>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="mtp.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PortableDevice.h" />
+    <ClInclude Include="PortableDeviceContentJ.h" />
     <ClInclude Include="PortableDeviceManager.h" />
+    <ClInclude Include="PortableDeviceObjectJ.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -163,7 +178,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="PortableDevice.cpp" />
+    <ClCompile Include="PortableDeviceContentJ.cpp" />
     <ClCompile Include="PortableDeviceManager.cpp" />
+    <ClCompile Include="PortableDeviceObjectJ.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

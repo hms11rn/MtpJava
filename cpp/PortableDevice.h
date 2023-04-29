@@ -2,15 +2,22 @@
 #include <jni.h>
 #include <PortableDeviceApi.h>
 
+IPortableDeviceProperties* getPDProperties();
+
+void initializePropVariantCollection();
+IPortableDevicePropVariantCollection* getPropVariantCollection();
+
+
+// portable device values
 IPortableDeviceValues* getPortableDeviceValues();
 HRESULT InitializePortableDeviceValues();
-void ReleasePortableDeviceValues();
+void releasePortableDeviceValues();
 IPortableDevice* getPortableDevice();
 HRESULT InitializePortableDevice();
+void closePortableDevice();
 
 HRESULT OpenDevice(LPCWSTR wszPnPDeviceID, IPortableDevice** ppDevice, LPCWSTR, int, int, int);
 jobject GetKeyAndValuesMap(JNIEnv*, IPortableDeviceKeyCollection*, IPortableDeviceValues**);
-
 
 /* Header for class com_github_hms11rn_mtp_win32_PortableDeviceWin32 */
 
@@ -41,7 +48,7 @@ extern "C" {
 	 * Method:    open
 	* Signature: ()V
 	 */
-	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_open
+	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_openN
 	(JNIEnv*, jobject);
 
 	/*
@@ -49,7 +56,7 @@ extern "C" {
 	 * Method:    close
 	 * Signature: ()V
 	 */
-	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_close
+	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_closeN
 	(JNIEnv*, jobject);
 
 	JNIEXPORT jobjectArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getRootObjects

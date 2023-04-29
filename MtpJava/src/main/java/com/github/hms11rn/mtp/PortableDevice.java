@@ -21,7 +21,7 @@ public interface PortableDevice {
     int getPowerLevel();
     boolean IsNonConsumableSupported();
     PowerSource getPowerSource();
-
+    void reloadProperties();
     // device content
 
      void open();

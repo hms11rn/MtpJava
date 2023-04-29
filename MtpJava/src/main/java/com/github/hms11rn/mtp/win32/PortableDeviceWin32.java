@@ -10,12 +10,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 class PortableDeviceWin32 implements PortableDevice {
-    String deviceID;
+    private String deviceID;
+
+    private boolean isOpened;
 
     private Map nativeProperties;
     private Map<String, DeviceProperties.PropertyValue> properties;
     PortableDeviceWin32(String deviceID) {
         this.deviceID = deviceID;
+        reloadProperties(); // load in properties
     }
     /**
      * 0: name
@@ -34,14 +37,21 @@ class PortableDeviceWin32 implements PortableDevice {
     private static native Map getProperties(String deviceID);
 
 
+    @Override
     public void reloadProperties() {
         nativeProperties = getProperties(deviceID);
+        if (nativeProperties == null) {
+            System.err.println("Native Properties are Null");
+        }
+
         Map<String, DeviceProperties.PropertyValue> ret = new HashMap<>();
         for (int i = 0; i < nativeProperties.size(); i++) {
             String key = (String) new ArrayList(nativeProperties.keySet()).get(i);
             Object obj = nativeProperties.get(key);
             ret.put(key, new DeviceProperties.PropertyValue(obj.getClass(), key, obj));
         }
+        if (!isOpened)
+            close();
         this.properties = ret;
     }
 
@@ -107,15 +117,23 @@ class PortableDeviceWin32 implements PortableDevice {
 
 
     @Override
-    public native void open();
-
-    @Override
-    public native void close();
-
-    @Override
-    public PortableDeviceObject[] getRootObjects() {
-        return new PortableDeviceObject[0];
+    public void open() {
+        openN();
+        isOpened = true;
     }
+
+    @Override
+    public void close() {
+        closeN();
+        isOpened = false;
+    }
+
+    public native void openN();
+
+    public native void closeN();
+
+    @Override
+    public native PortableDeviceObject[] getRootObjects();
 
 
     @Override

@@ -22,7 +22,7 @@ public class Test {
         }
 
         //
-
+        pd.open();
         System.out.println(pd.getSerialNumber());
         System.out.println(pd.getFirmwareVersion());
         System.out.println(pd.getPowerSource());
@@ -31,5 +31,12 @@ public class Test {
         System.out.println(pd.IsNonConsumableSupported());
         System.out.println(pd.getSyncPartner());
 
+       pd.reloadProperties();
+
+        Map<String, DeviceProperties.PropertyValue> m1 = pd.getRootObjects()[0].getProperties();
+        for (int i = 0; i < m1.size(); i++) {
+         //   System.out.print(new ArrayList(m1.keySet()).get(i) + " :: ");
+            //   System.out.println(new ArrayList<>(m1.values()).get(i));
+        }
     }
 }
