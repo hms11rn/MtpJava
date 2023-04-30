@@ -35,8 +35,9 @@ public class Test {
 
         Map<String, DeviceProperties.PropertyValue> m1 = pd.getRootObjects()[0].getProperties();
         for (int i = 0; i < m1.size(); i++) {
-         //   System.out.print(new ArrayList(m1.keySet()).get(i) + " :: ");
-            //   System.out.println(new ArrayList<>(m1.values()).get(i));
+            System.out.print(new ArrayList(m1.keySet()).get(i) + " :: ");
+            System.out.println(new ArrayList<>(m1.values()).get(i));
         }
+        System.out.println("\r\n\r\n\r\n\r\n" + m1.get(DeviceProperties.OBJECT_CONTENT_TYPE).getStringValue());
     }
 }

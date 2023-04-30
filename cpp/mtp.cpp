@@ -25,3 +25,17 @@ void handleException(char* name)
 	cout << "Exception was thrown: " << name << endl;
 }
 
+jobject ConvertUnsignedLongLongToJava(JNIEnv* env, ULONGLONG number)
+{
+	jbyteArray buffer;
+	jclass cls;
+	jmethodID mid;
+
+	buffer = env->NewByteArray(9);
+	for (int i = 0; i < 8; i++)
+		env->SetByteArrayRegion(buffer, (i + 1), 1, (jbyte*)((byte*)&number + 7 - i));
+
+	cls = env->FindClass("java/math/BigInteger");
+	mid = env->GetMethodID(cls, "<init>", "([B)V");
+	return env->NewObject(cls, mid, buffer);
+}

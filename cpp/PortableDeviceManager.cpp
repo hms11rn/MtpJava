@@ -1,7 +1,6 @@
 #include "pch.h"
 
 #include <iostream>
-#include <wrl.h>
 #include "PortableDeviceManager.h"
 
 using namespace std;

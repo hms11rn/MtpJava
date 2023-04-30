@@ -13,6 +13,12 @@ public class DeviceProperties {
     public static String SUPPORTS_NON_CONSUMABLE;
     public static String SYNC_PARTNER;
 
+    public static String OBJECT_ID;
+    public static String OBJECT_CONTAINER_FUNCTIONAL_OBJECT_ID;
+    public static String OBJECT_PERSISTENT_UNIQUE_ID;
+    public static String OBJECT_NAME;
+    public static String OBJECT_CAN_DELETE;
+    public static String OBJECT_CONTENT_TYPE; // not sure yet how to implement it
     static {
         // if windows ...
         MANUFACTURE = MtpWin32.getGuid("WPD_DEVICE_MANUFACTURER");
@@ -23,6 +29,14 @@ public class DeviceProperties {
         PROTOCOL = MtpWin32.getGuid("WPD_DEVICE_PROTOCOL");
         SUPPORTS_NON_CONSUMABLE = MtpWin32.getGuid("SUPPORTS_NON_CONSUMABLE");
         SYNC_PARTNER = MtpWin32.getGuid("WPD_DEVICE_SYNC_PARTNER");
+        // object
+        OBJECT_ID = MtpWin32.getGuid("WPD_OBJECT_ID");
+        OBJECT_CONTAINER_FUNCTIONAL_OBJECT_ID = MtpWin32.getGuid("WPD_OBJECT_CONTAINER_FUNCTIONAL_OBJECT_ID");
+        OBJECT_PERSISTENT_UNIQUE_ID = MtpWin32.getGuid("WPD_OBJECT_PERSISTENT_UNIQUE_ID");
+        OBJECT_NAME = MtpWin32.getGuid("WPD_OBJECT_NAME");
+        OBJECT_CAN_DELETE = MtpWin32.getGuid("WPD_OBJECT_CAN_DELETE");
+        // to be figured out
+        OBJECT_CONTENT_TYPE = MtpWin32.getGuid("WPD_OBJECT_CONTENT_TYPE");
     }
     @SuppressWarnings("unused")
     public static class PropertyValue {

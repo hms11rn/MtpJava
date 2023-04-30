@@ -4,6 +4,7 @@ import com.github.hms11rn.mtp.DeviceProperties;
 import com.github.hms11rn.mtp.PortableDevice;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
+import javax.sound.sampled.Port;
 import java.sql.Array;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -132,9 +133,20 @@ class PortableDeviceWin32 implements PortableDevice {
 
     public native void closeN();
 
-    @Override
-    public native PortableDeviceObject[] getRootObjects();
+    public native Map<String, String> getRootObjectsN();
 
+    @Override
+    public PortableDeviceObject[] getRootObjects() {
+        Map<String, String> objects = getRootObjectsN();
+        PortableDeviceObject[] objs = new PortableDeviceObject[objects.size()];
+        int i = 0;
+        for (String id : objects.keySet()) {
+            System.out.println(objects.get(id));
+            objs[i] = new PortableDeviceObjectWin32(id);
+            i++;
+        }
+        return objs;
+    }
 
     @Override
     public PowerSource getPowerSource() {

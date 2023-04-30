@@ -22,3 +22,4 @@ JNIEXPORT jobjectArray JNICALL Java_com_github_hms11rn_mtp_Mtp_getMtpNames
 #endif
 
 void handleException(char* name);
+jobject ConvertUnsignedLongLongToJava(JNIEnv* env, ULONGLONG number);

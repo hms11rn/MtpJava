@@ -22,7 +22,7 @@ PortableDeviceContentJ::PortableDeviceContentJ(IPortableDeviceContent* content, 
 
 jobject PortableDeviceContentJ::getObject(LPWSTR idd, JNIEnv* env)
 {
-	jclass javaClass = env->FindClass("com/github/hms11rn/mtp/win32/content/PortableDeviceObjectWin32");
+	jclass javaClass = env->FindClass("com/github/hms11rn/mtp/win32/PortableDeviceObjectWin32");
 	jmethodID constructor = env->GetMethodID(javaClass, "<init>", "(Ljava/lang/String;)V");
 	
 	jstring idJava = env->NewString((jchar*)idd, wcslen(idd));

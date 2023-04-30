@@ -1,13 +1,17 @@
-package com.github.hms11rn.mtp.win32.content;
+package com.github.hms11rn.mtp.win32;
 
 import com.github.hms11rn.mtp.DeviceProperties;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 class PortableDeviceObjectWin32 implements PortableDeviceObject {
+
+    Map<String, DeviceProperties.PropertyValue> properties;
 
     String id;
     protected PortableDeviceObjectWin32(String id) {
@@ -15,7 +19,29 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
         init(id);
     }
 
-    public native Map<String, DeviceProperties.PropertyValue> getProperties();
+    public native Map<String, DeviceProperties.PropertyValue> getPropertiesN();
+
+    private void loadProperties() {
+        if (properties == null)
+            reloadProperties();
+    }
+    public void reloadProperties() {
+        Map nativeProperties = getPropertiesN();
+        Map <String, DeviceProperties.PropertyValue> ret = new HashMap<>();
+
+        for (int i = 0; i < nativeProperties.size(); i++) {
+            String key = (String) new ArrayList(nativeProperties.keySet()).get(i);
+            Object obj = nativeProperties.get(key);
+            ret.put(key, new DeviceProperties.PropertyValue(obj.getClass(), key, obj));
+        }
+        properties = ret;
+    }
+    @Override
+    public Map<String, DeviceProperties.PropertyValue> getProperties() {
+       loadProperties();
+        return properties;
+    }
+
 
     public native void init(String id);
 
@@ -26,7 +52,8 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
 
     @Override
     public String getName() {
-        return null;
+        loadProperties();
+        return properties.get(DeviceProperties.OBJECT_NAME).getStringValue();
     }
 
     @Override

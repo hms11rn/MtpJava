@@ -15,8 +15,9 @@ class PropertiesWin32 {
     protected static Guid WPD_OBJECT_CONTAINER_FUNCTIONAL_OBJECT_ID = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 23);
     protected static Guid WPD_OBJECT_PERSISTENT_UNIQUE_ID = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 5);
     protected static Guid WPD_OBJECT_NAME = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 4);
-
     protected static Guid WPD_OBJECT_CONTENT_TYPE = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 7);
+    protected static Guid WPD_OBJECT_CAN_DELETE = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 26);
+
     protected static String getGuid(String name) {
         if (name.equals("WPD_DEVICE_MANUFACTURER"))
             return WPD_DEVICE_MANUFACTURER.toString();
@@ -46,7 +47,8 @@ class PropertiesWin32 {
             return WPD_OBJECT_NAME.toString();
         if (name.equals("WPD_OBJECT_ID"))
             return WPD_OBJECT_ID.toString();
-
+        if (name.equals("WPD_OBJECT_CAN_DELETE"))
+            return WPD_OBJECT_CAN_DELETE.toString();
         return null;
     }
 }
