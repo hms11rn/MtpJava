@@ -12,8 +12,9 @@ class PortableDeviceContentJ
 		PortableDeviceContentJ();
 		PortableDeviceContentJ(IPortableDeviceContent*, LPWSTR deviceID);
 		IPortableDeviceContent* getContent();
-
+		
 		IPortableDeviceProperties* getProperties();
+		jstring addFile(JNIEnv* env, LPWSTR parent, jstring, jobject);
 		jobject getObject(LPWSTR idd, JNIEnv* env);
 
 

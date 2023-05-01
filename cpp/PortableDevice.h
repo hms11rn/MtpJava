@@ -59,9 +59,12 @@ extern "C" {
 	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_closeN
 	(JNIEnv*, jobject);
 
-	JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getRootObjectsN
-	(JNIEnv*, jobject);
+	JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getObjectsN
+	(JNIEnv*, jobject, jstring);
 
+	JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFileObjectN
+	(JNIEnv* env, jobject, jstring name, jstring parent, jobject file);
+	
 
 #ifdef __cplusplus
 }

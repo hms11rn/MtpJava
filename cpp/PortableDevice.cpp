@@ -248,7 +248,6 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
         return nullptr;
     }
     jobject map = GetKeyAndValuesMap(env, deviceKeys, &deviceValues);
-    pContent->Release();
     return map;
 }
 
@@ -518,13 +517,12 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_clo
    
 }
 
-JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getRootObjectsN
-(JNIEnv* env, jobject cls) {
+JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getObjectsN
+(JNIEnv* env, jobject cls, jstring objIdJava) {
     IPortableDeviceContent* pContent;
 
-    // prop variant collections of ids
-    IPortableDevicePropVariantCollection* pPropCollections;
-
+    // object id
+    LPWSTR objId;
     // device id
     jfieldID deviceIDField;
     // java device id
@@ -545,9 +543,9 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     jdeviceID = (jstring)env->GetObjectField(cls, deviceIDField);
     wszDeviceID = (WCHAR*)env->GetStringChars(jdeviceID, nullptr);
 
-    // initalaize prop variant collections
+    objId = (WCHAR*)env->GetStringChars(objIdJava, nullptr);
 
-            //jobject portableDeviceObject = env->NewObject(portableObjectClass, init);
+ 
     
     // get root objects
     HRESULT hr = pDevice->Content(&pContent);
@@ -558,7 +556,7 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     }
     
     IEnumPortableDeviceObjectIDs* pEnum = nullptr;
-    hr = pContent->EnumObjects(0, WPD_DEVICE_OBJECT_ID, nullptr, &pEnum);
+    hr = pContent->EnumObjects(0, objId, nullptr, &pEnum);
     if (FAILED(hr)) {
         cout << "pDeviceContent->EnumObjects failed: " << hr << endl;
         // Handle the error        pContent->Release();
@@ -566,7 +564,7 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     }
     DWORD dwFetched = 0;
     LPWSTR szObjectID = nullptr;
-    jobjectArray strarr = env->NewObjectArray(1, env->FindClass("com/github/hms11rn/mtp/win32/PortableDeviceObjectWin32"), nullptr);
+    
     while (SUCCEEDED(pEnum->Next(1, &szObjectID, &dwFetched)) && (dwFetched > 0)) {
         IPortableDeviceValues* contentTypeValue;
         pProperties->GetValues(szObjectID, getContentTypeKey(), &contentTypeValue);
@@ -581,7 +579,7 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
             GUID functionalType;
             contentTypeValue->GetGuidValue(WPD_FUNCTIONAL_OBJECT_CATEGORY, &functionalType);
             if (functionalType == WPD_FUNCTIONAL_CATEGORY_STORAGE) {
-                contentTypeJava = env->NewStringUTF("WPD_FUNCTIONAL_CATERGORY_STORAGE");
+                contentTypeJava = env->NewStringUTF("FUNCTIONAL_CATERGORY_STORAGE");
             }
             else {
                 contentTypeJava = env->NewStringUTF("CONTENT_TYPE_FILE");
@@ -594,7 +592,6 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
         jstring idJava = env->NewString((jchar*)szObjectID, wcslen(szObjectID));
         env->CallObjectMethod(hashMap, put, idJava, contentTypeJava);
         
-        env->SetObjectArrayElement(strarr, 0, content->getObject(szObjectID, env));
         CoTaskMemFree(szObjectID);
         szObjectID = nullptr;
     }
@@ -602,6 +599,16 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     return hashMap;
 }
 
+JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFileObjectN
+(JNIEnv* env, jobject cls, jstring name, jstring parent, jobject file) {
+    LPWSTR wszParent;
+    wszParent = (WCHAR*)env->GetStringChars(parent, nullptr);
+    jstring s = content->addFile(env, wszParent, name, file);
+    if (s == nullptr) {
+        return env->NewStringUTF("");
+    }
+    return s;
+}
 /*
  PROPVARIANT varPUIID = {};
         PropVariantInit(&varPUIID);

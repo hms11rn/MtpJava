@@ -9,7 +9,7 @@
 extern "C" {
 #endif
 	JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceObjectWin32_getPropertiesN
-	(JNIEnv*, jobject);
+	(JNIEnv*, jobject, jstring id);
 
 	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceObjectWin32_init
 	(JNIEnv* env, jobject, jstring);
@@ -18,9 +18,8 @@ extern "C" {
 }
 #endif
 #endif
-jobject getProperties(JNIEnv* env);
 
-jobject keyAndValues(JNIEnv* env);
+jobject keyAndValues(JNIEnv* env, LPWSTR id);
 
 
 	
