@@ -2,6 +2,8 @@ package com.github.hms11rn.mtp;
 
 import com.github.hms11rn.mtp.win32.MtpWin32;
 
+import java.math.BigInteger;
+
 public class DeviceProperties {
 
     public static String MANUFACTURE;
@@ -75,6 +77,14 @@ public class DeviceProperties {
         public <T> T[] getArrayValue() {
 
             return (T[]) value;
+        }
+
+        public boolean getBooleanValue() {
+
+            return (Boolean) value;
+        }
+        public BigInteger getBigIntergerValue() {
+            return (BigInteger) value;
         }
     }
 }

@@ -2,13 +2,18 @@ import com.github.hms11rn.mtp.DeviceProperties;
 import com.github.hms11rn.mtp.Mtp;
 import com.github.hms11rn.mtp.PortableDevice;
 import com.github.hms11rn.mtp.PortableDeviceManager;
+import com.github.hms11rn.mtp.content.PortableDeviceContainerObject;
+import com.github.hms11rn.mtp.content.PortableDeviceObject;
+import com.github.hms11rn.mtp.content.PortableDeviceStorageObject;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
 public class Test {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         Mtp.register();
         PortableDeviceManager mgr = PortableDeviceManager.getDeviceManager();
         PortableDevice pd = mgr.getDevices()[0];
@@ -33,11 +38,16 @@ public class Test {
 
        pd.reloadProperties();
 
-        Map<String, DeviceProperties.PropertyValue> m1 = pd.getRootObjects()[0].getProperties();
+        PortableDeviceContainerObject obj =  (PortableDeviceContainerObject) pd.getRootObjects()[0];
+        PortableDeviceContainerObject j = (PortableDeviceContainerObject) obj.getChildObjects()[0];
+        System.out.println(j.getName());
+        Map<String, DeviceProperties.PropertyValue> m1 = j.getProperties();
         for (int i = 0; i < m1.size(); i++) {
             System.out.print(new ArrayList(m1.keySet()).get(i) + " :: ");
             System.out.println(new ArrayList<>(m1.values()).get(i));
         }
-        System.out.println("\r\n\r\n\r\n\r\n" + m1.get(DeviceProperties.OBJECT_CONTENT_TYPE).getStringValue());
+
+        System.out.println("\r\n\r\n\r\n\r\n\r\n" + j.getName());
+        j.addFileObject(new File("C:\\Users\\hmsel\\Documents\\randomText2.txt"));
     }
 }

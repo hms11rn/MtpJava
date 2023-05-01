@@ -4,8 +4,7 @@ import com.github.hms11rn.mtp.DeviceProperties;
 import com.github.hms11rn.mtp.PortableDevice;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
-import javax.sound.sampled.Port;
-import java.sql.Array;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,8 +16,13 @@ class PortableDeviceWin32 implements PortableDevice {
 
     private Map nativeProperties;
     private Map<String, DeviceProperties.PropertyValue> properties;
+    private PortableDeviceContentWin32 content;
+
     PortableDeviceWin32(String deviceID) {
+
         this.deviceID = deviceID;
+        PortableDeviceContentWin32 content = new PortableDeviceContentWin32(this);
+        this.content = content;
         reloadProperties(); // load in properties
     }
     /**
@@ -129,20 +133,20 @@ class PortableDeviceWin32 implements PortableDevice {
         isOpened = false;
     }
 
-    public native void openN();
+    protected native void openN();
 
-    public native void closeN();
+    protected native void closeN();
 
-    public native Map<String, String> getRootObjectsN();
+    protected native Map<String, String> getObjectsN(String objId);
+    protected native String addFileObjectN(String name, String parentId, File file);
 
     @Override
     public PortableDeviceObject[] getRootObjects() {
-        Map<String, String> objects = getRootObjectsN();
+        Map<String, String> objects = getObjectsN("DEVICE");
         PortableDeviceObject[] objs = new PortableDeviceObject[objects.size()];
         int i = 0;
         for (String id : objects.keySet()) {
-            System.out.println(objects.get(id));
-            objs[i] = new PortableDeviceObjectWin32(id);
+            objs[i] = content.getObjectFromID(id, objects.get(id));
             i++;
         }
         return objs;
