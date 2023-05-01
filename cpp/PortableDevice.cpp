@@ -609,6 +609,14 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     }
     return s;
 }
+JNIEXPORT jboolean JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_deleteFileN(JNIEnv* env, jobject, jstring id)
+{
+    LPWSTR wszObjectID;
+    wszObjectID = (WCHAR*)env->GetStringChars(id, nullptr);
+    cout << "here1:" << endl;
+    content->deleteFile(wszObjectID);
+    return true;
+}
 /*
  PROPVARIANT varPUIID = {};
         PropVariantInit(&varPUIID);

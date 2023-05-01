@@ -24,6 +24,9 @@ class PortableDeviceContentWin32 {
         return device.addFileObjectN(file.getName(), parent, file);
     }
 
+    protected boolean delete(String id) {
+        return device.deleteFileN(id);
+    }
     protected PortableDeviceObject[] getObjects(String containerId) {
         Map<String, String> objects;
         objects = device.getObjectsN(containerId);

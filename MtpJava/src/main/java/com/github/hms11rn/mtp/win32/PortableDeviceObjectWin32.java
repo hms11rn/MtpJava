@@ -141,4 +141,8 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
         return null;
     }
 
+    @Override
+    public boolean delete() {
+        return content.delete(id);
+    }
 }

@@ -49,5 +49,6 @@ public class Test {
 
         System.out.println("\r\n\r\n\r\n\r\n\r\n" + j.getName());
         j.addFileObject(new File("C:\\Users\\hmsel\\Documents\\randomText2.txt"));
+
     }
 }

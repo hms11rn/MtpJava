@@ -16,7 +16,8 @@ class PortableDeviceContentJ
 		IPortableDeviceProperties* getProperties();
 		jstring addFile(JNIEnv* env, LPWSTR parent, jstring, jobject);
 		jobject getObject(LPWSTR idd, JNIEnv* env);
+		BOOL deleteFile(LPWSTR idd);
 
-
+		IPortableDevicePropVariantCollection* getPropCollection();
 };
 

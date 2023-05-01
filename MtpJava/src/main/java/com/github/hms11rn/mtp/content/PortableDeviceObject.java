@@ -28,4 +28,5 @@ public interface PortableDeviceObject {
       String getContentType();
       Map<String, DeviceProperties.PropertyValue> getProperties();
 
+      boolean delete();
 }

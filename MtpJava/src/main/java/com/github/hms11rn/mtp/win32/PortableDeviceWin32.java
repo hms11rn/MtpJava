@@ -139,6 +139,7 @@ class PortableDeviceWin32 implements PortableDevice {
 
     protected native Map<String, String> getObjectsN(String objId);
     protected native String addFileObjectN(String name, String parentId, File file);
+    protected native boolean deleteFileN(String id);
 
     @Override
     public PortableDeviceObject[] getRootObjects() {

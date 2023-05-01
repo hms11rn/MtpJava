@@ -13,6 +13,18 @@ using namespace std;
 
 IPortableDeviceContent* pContent;
 IPortableDeviceValues* pCollection;
+IPortableDevicePropVariantCollection* propColl;
+
+IPortableDevicePropVariantCollection* PortableDeviceContentJ::getPropCollection() {
+	if (propColl == nullptr) {
+		HRESULT hr = CoCreateInstance
+		(CLSID_PortableDevicePropVariantCollection, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&propColl));
+	}
+	propColl->Clear();
+	return propColl;
+}
+
+
 
 HRESULT StreamCopy(IPortableDeviceDataStream* pDestStream, IStream* pSourceStream, DWORD cbTransferSize, DWORD* pcbWritten);
 
@@ -49,7 +61,22 @@ jobject PortableDeviceContentJ::getObject(LPWSTR idd, JNIEnv* env)
 	
 	return javaObject;
 }
- 
+
+BOOL PortableDeviceContentJ::deleteFile(LPWSTR idd)
+{
+	IPortableDevicePropVariantCollection* coll;
+	IPortableDevicePropVariantCollection* result;
+	coll = getPropCollection();
+	PROPVARIANT del;
+	PropVariantInit(&del);
+	del.vt = VT_LPWSTR;
+	del.pwszVal = idd;
+	coll->Add(&del);
+	pContent->Delete(PORTABLE_DEVICE_DELETE_NO_RECURSION, coll, &result);
+	return 0;
+}
+
+
 
 
 IPortableDeviceContent* PortableDeviceContentJ::getContent() {
