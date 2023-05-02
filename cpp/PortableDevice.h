@@ -63,10 +63,13 @@ extern "C" {
 	(JNIEnv*, jobject, jstring);
 
 	JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFileObjectN
-	(JNIEnv* env, jobject, jstring name, jstring parent, jobject file);
+	(JNIEnv* env, jobject, jstring name, jstring parent, jobject file, jstring type, jstring format);
 	
+	JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFolderObjectN
+	(JNIEnv* env, jobject, jstring name, jstring parent);
+
 	JNIEXPORT jboolean JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_deleteFileN
-	(JNIEnv* env, jobject, jstring id);
+	(JNIEnv* env, jobject, jstring id, jint recursion);
 
 #ifdef __cplusplus
 }

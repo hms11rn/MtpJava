@@ -62,8 +62,10 @@ jobject PortableDeviceContentJ::getObject(LPWSTR idd, JNIEnv* env)
 	return javaObject;
 }
 
-BOOL PortableDeviceContentJ::deleteFile(LPWSTR idd)
+BOOL PortableDeviceContentJ::deleteFile(LPWSTR idd, int recursion)
 {
+	if (recursion != 0 && recursion != 1)
+		recursion = 0;
 	IPortableDevicePropVariantCollection* coll;
 	IPortableDevicePropVariantCollection* result;
 	coll = getPropCollection();
@@ -72,7 +74,7 @@ BOOL PortableDeviceContentJ::deleteFile(LPWSTR idd)
 	del.vt = VT_LPWSTR;
 	del.pwszVal = idd;
 	coll->Add(&del);
-	pContent->Delete(PORTABLE_DEVICE_DELETE_NO_RECURSION, coll, &result);
+	pContent->Delete(recursion, coll, &result);
 	return 0;
 }
 
@@ -88,9 +90,10 @@ IPortableDeviceProperties* PortableDeviceContentJ::getProperties() {
 	return ppProperties;
 }
 
-jstring PortableDeviceContentJ::addFile(JNIEnv* env, LPWSTR parent, jstring javaName, jobject javaFile)
+jstring PortableDeviceContentJ::addFile(JNIEnv* env, LPWSTR parent, jstring javaName, jobject javaFile, jstring contentType)
 {
 	HRESULT hr;
+
 
 	jmethodID pathMethod;
 	jstring jFileLocation;
@@ -111,6 +114,12 @@ jstring PortableDeviceContentJ::addFile(JNIEnv* env, LPWSTR parent, jstring java
 	LPWSTR wszObjectID;
 	jstring jObjectID;
 	
+	// Content Type
+	LPWSTR wszContentType;
+	GUID contentTypeGuid;
+	wszContentType = (WCHAR*)env->GetStringChars(contentType, nullptr);
+	hr = CLSIDFromString(wszContentType, &contentTypeGuid);
+
 	pathMethod = env->GetMethodID(env->FindClass("java/io/File"), "getAbsolutePath", "()Ljava/lang/String;");
 	jFileLocation = (jstring)env->CallObjectMethod(javaFile, pathMethod);
 	wszFileLocation = (WCHAR*)env->GetStringChars(jFileLocation, nullptr);
@@ -123,7 +132,7 @@ jstring PortableDeviceContentJ::addFile(JNIEnv* env, LPWSTR parent, jstring java
 		pValues->SetStringValue(WPD_OBJECT_PARENT_ID, parent);
 		pValues->SetStringValue(WPD_OBJECT_NAME, wszFileName);
 		pValues->SetStringValue(WPD_OBJECT_ORIGINAL_FILE_NAME, wszFileName);
-		pValues->SetGuidValue(WPD_OBJECT_CONTENT_TYPE, WPD_CONTENT_TYPE_DOCUMENT);
+		pValues->SetGuidValue(WPD_OBJECT_CONTENT_TYPE, contentTypeGuid);
 		pValues->SetGuidValue(WPD_OBJECT_FORMAT, WPD_OBJECT_FORMAT_TEXT);
 		pFileStream->Stat(&fileStats, STATFLAG_NONAME);
 		pValues->SetUnsignedLargeIntegerValue(WPD_OBJECT_SIZE, fileStats.cbSize.QuadPart);
@@ -142,12 +151,33 @@ jstring PortableDeviceContentJ::addFile(JNIEnv* env, LPWSTR parent, jstring java
 				return jObjectID;
 			}
 		}
-
 	}
+	
 	return nullptr;
 }
 
-////////////////////
+jstring PortableDeviceContentJ::addFolder(JNIEnv* env, LPWSTR wszName, LPWSTR parent)
+{
+	HRESULT hr;
+	
+	LPWSTR outID;
+	jstring outIDJava;
+	IPortableDeviceValues* values;
+
+	values = getCollection();
+	values->SetStringValue(WPD_OBJECT_PARENT_ID, parent);
+	values->SetStringValue(WPD_OBJECT_NAME, wszName);
+	values->SetStringValue(WPD_OBJECT_ORIGINAL_FILE_NAME, wszName);
+	values->SetGuidValue(WPD_OBJECT_CONTENT_TYPE, WPD_CONTENT_TYPE_FOLDER);
+	hr = pContent->CreateObjectWithPropertiesOnly(values, &outID);
+	if (!SUCCEEDED(hr)) {
+		// handle error
+		return nullptr;
+	}
+	outIDJava = env->NewString((jchar*)outID, wcslen(outID));
+	return outIDJava;
+}
+// ?????
 PortableDeviceContentJ::PortableDeviceContentJ()
 {
 }
@@ -220,7 +250,8 @@ HRESULT StreamCopy(IPortableDeviceDataStream* pDestStream, IStream* pSourceStrea
 	else
 	{
 		printf("! Failed to allocate %d bytes for the temporary transfer buffer.\n", cbTransferSize);
-	}
 
+		return hr;
+	}
 	return hr;
 }

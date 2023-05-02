@@ -112,7 +112,6 @@ HRESULT InitializePortableDevice()
             return hr;
         }
     }
-    // initialize content
 
     return S_OK;
 }
@@ -122,7 +121,7 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     IPortableDeviceManager *pDeviceManager;
     LPWSTR wszDeviceID;
     LPWSTR wszDeviceFriendlyName;
-    DWORD length;
+    DWORD length{};
     jstring friendlyName;
 
     pDeviceManager = getDeviceManager();
@@ -263,7 +262,7 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
     HRESULT hr = keys->GetCount(&size);
 
 
-    for (int i = 0; i < size; i++) {
+    for (DWORD i = 0; i < size; i++) {
         PROPERTYKEY keyName;
         LPWSTR pszName;
         DWORD pszId;
@@ -335,6 +334,17 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
             CoTaskMemFree(valueAtCLSID);
             env->CallObjectMethod(hashMap, put, keyJava, singleValueJavaCLSID);
             env->DeleteLocalRef(singleValueJavaCLSID);
+            env->DeleteLocalRef(keyJava);
+            break;
+        }
+        case VT_DATE: {
+            LPWSTR valueAtDate;
+            (*values)->GetStringValue(keyName, &valueAtDate);
+            jstring singleValueJava = env->NewString((jchar*)valueAtDate, wcslen(valueAtDate));
+            // free memory
+            CoTaskMemFree(valueAtDate);
+            env->CallObjectMethod(hashMap, put, keyJava, singleValueJava);
+            env->DeleteLocalRef(singleValueJava);
             env->DeleteLocalRef(keyJava);
             break;
         }
@@ -513,6 +523,21 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_clo
     jsDeviceID = (jstring)env->GetObjectField(obj, fid);
     wszDeviceID = (WCHAR*)env->GetStringChars(jsDeviceID, NULL);
     pDevice->Close();
+    pDevice->Release();
+    pDevice = nullptr;
+    if (pClientValues != nullptr) {
+        pClientValues->Release();
+        pClientValues = nullptr;
+    }
+    if (propVariantCollections != nullptr) {
+        propVariantCollections->Release();
+        propVariantCollections = nullptr;
+    }
+    if (contentTypeKey != nullptr) {
+        contentTypeKey->Release();
+        contentTypeKey = nullptr;
+    }
+
     isOpen = false;
    
 }
@@ -579,7 +604,7 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
             GUID functionalType;
             contentTypeValue->GetGuidValue(WPD_FUNCTIONAL_OBJECT_CATEGORY, &functionalType);
             if (functionalType == WPD_FUNCTIONAL_CATEGORY_STORAGE) {
-                contentTypeJava = env->NewStringUTF("FUNCTIONAL_CATERGORY_STORAGE");
+                contentTypeJava = env->NewStringUTF("FUNCTIONAL_CATEGORY_STORAGE");
             }
             else {
                 contentTypeJava = env->NewStringUTF("CONTENT_TYPE_FILE");
@@ -600,22 +625,37 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
 }
 
 JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFileObjectN
-(JNIEnv* env, jobject cls, jstring name, jstring parent, jobject file) {
+(JNIEnv* env, jobject cls, jstring name, jstring parent, jobject file, jstring type, jstring format) {
     LPWSTR wszParent;
     wszParent = (WCHAR*)env->GetStringChars(parent, nullptr);
-    jstring s = content->addFile(env, wszParent, name, file);
+    jstring s = content->addFile(env, wszParent, name, file, type);
     if (s == nullptr) {
         return env->NewStringUTF("");
     }
+    
     return s;
 }
-JNIEXPORT jboolean JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_deleteFileN(JNIEnv* env, jobject, jstring id)
+
+JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFolderObjectN(JNIEnv* env, jobject, jstring name, jstring parent)
+{
+    LPWSTR wszParent;
+    LPWSTR wszName;
+    wszParent = (WCHAR*)env->GetStringChars(parent, nullptr);
+    wszName = (WCHAR*)env->GetStringChars(name, nullptr);
+
+    jstring s = content->addFolder(env, wszName, wszParent);
+    if (s == nullptr)
+        return env->NewStringUTF("");
+    return s;
+}
+
+
+JNIEXPORT jboolean JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_deleteFileN(JNIEnv* env, jobject, jstring id, jint recursion)
 {
     LPWSTR wszObjectID;
     wszObjectID = (WCHAR*)env->GetStringChars(id, nullptr);
-    cout << "here1:" << endl;
-    content->deleteFile(wszObjectID);
-    return true;
+    BOOL success = content->deleteFile(wszObjectID, recursion);
+    return success;
 }
 /*
  PROPVARIANT varPUIID = {};

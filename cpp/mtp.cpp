@@ -1,11 +1,11 @@
 #include "pch.h"
 #include "mtp.h"
-#include "portabledeviceapi.h"
 #include <string>
 #include <iostream>
 #include "PortableDeviceManager.h"
 
 using namespace std;
+
 
 // Implementation of the native method getMtpNames()
 JNIEXPORT jobjectArray JNICALL Java_com_github_hms11rn_mtp_Mtp_getMtpNames

@@ -2,20 +2,25 @@ package com.github.hms11rn.mtp.win32;
 
 import com.github.hms11rn.mtp.DeviceProperties;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
+
+
 import static com.github.hms11rn.mtp.win32.PropertiesWin32.*;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 class PortableDeviceObjectWin32 implements PortableDeviceObject {
 
     Map<String, DeviceProperties.PropertyValue> properties;
-    String id;
-    PortableDeviceContentWin32 content;
-
+    final String id;
+    final PortableDeviceContentWin32 content;
+    /**
+     * Used to convert c++ string date to {@link java.util.Date}
+     */
+    final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd:HH:mm:sss", Locale.ENGLISH);
     protected PortableDeviceObjectWin32(String id, PortableDeviceContentWin32 content) {
         this.id = id;
         this.content = content;
@@ -98,22 +103,45 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
 
     @Override
     public Date getDateModified() {
-        return null;
+            DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_DATE_MODIFIED.toString());
+            if (ret == null)
+                return null;
+            try {
+                return dateFormat.parse(ret.getStringValue());
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+        }
     }
 
     @Override
     public Date getDateCreated() {
-        return null;
+        DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_DATE_CREATED.toString());
+        if (ret == null)
+            return null;
+        try {
+            return dateFormat.parse(ret.getStringValue());
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public Date getDateAuthored() {
-        return null;
-    }
+        DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_DATE_AUTHORED.toString());
+        if (ret == null)
+            return null;
+        try {
+            return dateFormat.parse(ret.getStringValue());
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }    }
 
     @Override
     public PortableDeviceObject getParent() {
-        return null;
+        DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_PARENT_ID.toString());
+        if (ret == null)
+            return null;
+        return new PortableDeviceObjectWin32(ret.getStringValue(), content);
     }
 
     @Override

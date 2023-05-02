@@ -10,19 +10,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 class PortableDeviceWin32 implements PortableDevice {
-    private String deviceID;
+    private final String deviceID;
 
     private boolean isOpened;
 
-    private Map nativeProperties;
+    private Map<String, Object> nativeProperties;
     private Map<String, DeviceProperties.PropertyValue> properties;
-    private PortableDeviceContentWin32 content;
+    private final PortableDeviceContentWin32 content;
 
     PortableDeviceWin32(String deviceID) {
-
         this.deviceID = deviceID;
-        PortableDeviceContentWin32 content = new PortableDeviceContentWin32(this);
-        this.content = content;
+        this.content = new PortableDeviceContentWin32(this);
         reloadProperties(); // load in properties
     }
     /**
@@ -31,7 +29,6 @@ class PortableDeviceWin32 implements PortableDevice {
      * 2:firmware version
      * 3:serial number
      * 4: power source
-     * @return
      */
 
 
@@ -39,7 +36,7 @@ class PortableDeviceWin32 implements PortableDevice {
     private static native String getFriendlyName(String deviceID);
     private static native String getManufacturer(String deviceID);
     private static native String getDescription(String deviceID);
-    private static native Map getProperties(String deviceID);
+    private static native Map<String, Object> getProperties(String deviceID);
 
 
     @Override
@@ -51,7 +48,7 @@ class PortableDeviceWin32 implements PortableDevice {
 
         Map<String, DeviceProperties.PropertyValue> ret = new HashMap<>();
         for (int i = 0; i < nativeProperties.size(); i++) {
-            String key = (String) new ArrayList(nativeProperties.keySet()).get(i);
+            String key = new ArrayList<>(nativeProperties.keySet()).get(i);
             Object obj = nativeProperties.get(key);
             ret.put(key, new DeviceProperties.PropertyValue(obj.getClass(), key, obj));
         }
@@ -138,8 +135,9 @@ class PortableDeviceWin32 implements PortableDevice {
     protected native void closeN();
 
     protected native Map<String, String> getObjectsN(String objId);
-    protected native String addFileObjectN(String name, String parentId, File file);
-    protected native boolean deleteFileN(String id);
+    protected native String addFileObjectN(String name, String parentId, File file, String contentType, String format);
+    protected native String addFolderObjectN(String name, String parentId);
+    protected native boolean deleteFileN(String id, int recursion);
 
     @Override
     public PortableDeviceObject[] getRootObjects() {

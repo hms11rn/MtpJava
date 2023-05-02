@@ -5,7 +5,6 @@ import com.github.hms11rn.mtp.content.PortableDeviceFolderObject;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public class PortableDeviceContainerObjectWin32 extends PortableDeviceObjectWin32 implements PortableDeviceContainerObject {
@@ -19,12 +18,16 @@ public class PortableDeviceContainerObjectWin32 extends PortableDeviceObjectWin3
     }
 
     @Override
-    public PortableDeviceObject addFileObject(File file) throws FileNotFoundException, IOException {
+    public PortableDeviceObject addFileObject(File file) throws IOException {
+        if (file.isDirectory())
+            return createFolderObject(file.getName());
         return new PortableDeviceObjectWin32(content.createObject(file, id), content);
     }
 
+
+
     @Override
     public PortableDeviceFolderObject createFolderObject(String name) {
-        return null;
+        return new PortableDeviceFolderObjectWin32(content.createFolder(name, id), content);
     }
 }

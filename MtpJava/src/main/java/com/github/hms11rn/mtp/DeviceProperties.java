@@ -83,7 +83,7 @@ public class DeviceProperties {
 
             return (Boolean) value;
         }
-        public BigInteger getBigIntergerValue() {
+        public BigInteger getBigIntegerValue() {
             return (BigInteger) value;
         }
     }

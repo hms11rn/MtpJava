@@ -39,7 +39,7 @@ public class PortableDeviceStorageObjectWin32 extends PortableDeviceContainerObj
         DeviceProperties.PropertyValue  ret = properties.get(WPD_STORAGE_CAPACITY.toString());
         if (ret == null)
             return null;
-        return ret.getBigIntergerValue();
+        return ret.getBigIntegerValue();
     }
 
     @Override
@@ -47,7 +47,7 @@ public class PortableDeviceStorageObjectWin32 extends PortableDeviceContainerObj
         DeviceProperties.PropertyValue  ret = properties.get(WPD_STORAGE_CAPACITY_IN_OBJECTS.toString());
         if (ret == null)
             return null;
-        return ret.getBigIntergerValue();
+        return ret.getBigIntegerValue();
     }
 
     @Override
@@ -55,7 +55,7 @@ public class PortableDeviceStorageObjectWin32 extends PortableDeviceContainerObj
         DeviceProperties.PropertyValue  ret = properties.get(WPD_STORAGE_FREE_SPACE_IN_BYTES.toString());
         if (ret == null)
             return null;
-        return ret.getBigIntergerValue();
+        return ret.getBigIntegerValue();
     }
 
     @Override
@@ -63,7 +63,7 @@ public class PortableDeviceStorageObjectWin32 extends PortableDeviceContainerObj
         DeviceProperties.PropertyValue  ret = properties.get(WPD_STORAGE_FREE_SPACE_IN_OBJECTS.toString());
         if (ret == null)
             return null;
-        return ret.getBigIntergerValue();
+        return ret.getBigIntegerValue();
     }
 
     @Override
@@ -71,6 +71,6 @@ public class PortableDeviceStorageObjectWin32 extends PortableDeviceContainerObj
         DeviceProperties.PropertyValue  ret = properties.get(WPD_STORAGE_MAX_OBJECT_SIZE.toString());
         if (ret == null)
             return null;
-        return ret.getBigIntergerValue();
+        return ret.getBigIntegerValue();
     }
 }

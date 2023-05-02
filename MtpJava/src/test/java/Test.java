@@ -4,7 +4,6 @@ import com.github.hms11rn.mtp.PortableDevice;
 import com.github.hms11rn.mtp.PortableDeviceManager;
 import com.github.hms11rn.mtp.content.PortableDeviceContainerObject;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
-import com.github.hms11rn.mtp.content.PortableDeviceStorageObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +12,7 @@ import java.util.Map;
 
 public class Test {
 
-    public static void main(String[] args) throws IOException {
+    static void test() throws IOException {
         Mtp.register();
         PortableDeviceManager mgr = PortableDeviceManager.getDeviceManager();
         PortableDevice pd = mgr.getDevices()[0];
@@ -36,9 +35,9 @@ public class Test {
         System.out.println(pd.IsNonConsumableSupported());
         System.out.println(pd.getSyncPartner());
 
-       pd.reloadProperties();
+        pd.reloadProperties();
 
-        PortableDeviceContainerObject obj =  (PortableDeviceContainerObject) pd.getRootObjects()[0];
+        PortableDeviceContainerObject obj = (PortableDeviceContainerObject) pd.getRootObjects()[0];
         PortableDeviceContainerObject j = (PortableDeviceContainerObject) obj.getChildObjects()[0];
         System.out.println(j.getName());
         Map<String, DeviceProperties.PropertyValue> m1 = j.getProperties();
@@ -48,7 +47,18 @@ public class Test {
         }
 
         System.out.println("\r\n\r\n\r\n\r\n\r\n" + j.getName());
-        j.addFileObject(new File("C:\\Users\\hmsel\\Documents\\randomText2.txt"));
-
+     //    j.addFileObject(new File("C:\\Users\\*******\\Documents\\randomText2.txt"));
+        // j.addFileObject(new File("C:\\Users\\*******\\Documents\\randomText3.txt"));
+        for (PortableDeviceObject j1 :  j.getChildObjects()) {
+            if (j1.getName().equals("randomText2.txt")) {
+                //    j1.delete();
+            }
+        }
+        System.out.println(j.getName());
+        System.out.println(j.getDateModified());
+     //   j.createFolderObject("newFolder");
+    }
+    public static void main(String[] args) throws IOException {
+        test();
     }
 }
