@@ -90,7 +90,7 @@ IPortableDeviceProperties* PortableDeviceContentJ::getProperties() {
 	return ppProperties;
 }
 
-jstring PortableDeviceContentJ::addFile(JNIEnv* env, LPWSTR parent, jstring javaName, jobject javaFile, jstring contentType)
+jstring PortableDeviceContentJ::addFile(JNIEnv* env, LPWSTR parent, jstring javaName, jobject javaFile, jstring contentType, jstring contentFormat)
 {
 	HRESULT hr;
 
@@ -119,6 +119,11 @@ jstring PortableDeviceContentJ::addFile(JNIEnv* env, LPWSTR parent, jstring java
 	GUID contentTypeGuid;
 	wszContentType = (WCHAR*)env->GetStringChars(contentType, nullptr);
 	hr = CLSIDFromString(wszContentType, &contentTypeGuid);
+	// Content Format
+	LPWSTR wszContentFormat;
+	GUID contentFormatGuid;
+	wszContentFormat = (WCHAR*)env->GetStringChars(contentFormat, nullptr);
+	hr = CLSIDFromString(wszContentFormat, &contentFormatGuid);
 
 	pathMethod = env->GetMethodID(env->FindClass("java/io/File"), "getAbsolutePath", "()Ljava/lang/String;");
 	jFileLocation = (jstring)env->CallObjectMethod(javaFile, pathMethod);
@@ -133,7 +138,7 @@ jstring PortableDeviceContentJ::addFile(JNIEnv* env, LPWSTR parent, jstring java
 		pValues->SetStringValue(WPD_OBJECT_NAME, wszFileName);
 		pValues->SetStringValue(WPD_OBJECT_ORIGINAL_FILE_NAME, wszFileName);
 		pValues->SetGuidValue(WPD_OBJECT_CONTENT_TYPE, contentTypeGuid);
-		pValues->SetGuidValue(WPD_OBJECT_FORMAT, WPD_OBJECT_FORMAT_TEXT);
+		pValues->SetGuidValue(WPD_OBJECT_FORMAT, contentFormatGuid);
 		pFileStream->Stat(&fileStats, STATFLAG_NONAME);
 		pValues->SetUnsignedLargeIntegerValue(WPD_OBJECT_SIZE, fileStats.cbSize.QuadPart);
 

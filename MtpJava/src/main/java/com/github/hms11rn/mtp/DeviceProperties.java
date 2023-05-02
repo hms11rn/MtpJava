@@ -40,15 +40,22 @@ public class DeviceProperties {
         // to be figured out
         OBJECT_CONTENT_TYPE = MtpWin32.getGuid("WPD_OBJECT_CONTENT_TYPE");
     }
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "unchecked"})
     public static class PropertyValue {
         private Object value;
-        private String key;
-        private Class type;
-        public PropertyValue(Class type, String key,  Object value) {
+        private final String key;
+        private final Class<?> type;
+        public PropertyValue(Class<?> type, String key,  Object value) {
             this.type = type;
             this.key = key;
             this.value = value;
+        }
+
+        public String getKey() {
+            return key;
+        }
+        public Class<?> getType() {
+            return type;
         }
 
         @Override

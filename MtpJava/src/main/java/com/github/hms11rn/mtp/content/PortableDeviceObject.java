@@ -6,6 +6,7 @@ import java.math.BigInteger;
 import java.util.Date;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public interface PortableDeviceObject {
 
      String getId();
@@ -23,7 +24,6 @@ public interface PortableDeviceObject {
       String getPersistentUniqueIdentifier();
       String getSyncID();
 
-      // dk what these do, just saw them in jmtp, will update
       String getFormat();
       String getContentType();
       Map<String, DeviceProperties.PropertyValue> getProperties();

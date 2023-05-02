@@ -44,6 +44,7 @@ class PropertiesWin32 {
     protected static Guid WPD_CONTENT_TYPE_GENERIC_FILE = new Guid("{0085E0A6-8D34-45D7-BC5C-447E59C73D48}");
     protected static Guid WPD_CONTENT_TYPE_FOLDER = new Guid("{27E2E392-A111-48E0-AB0C-E17705A05F85}");
     //============= Portable Device Content Format =============\\
+    protected static Guid WPD_OBJECT_FORMAT = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 6);
     protected static Guid WPD_OBJECT_FORMAT_UNSPECIFIED = new Guid("{30000000-AE6C-4804-98BA-C57B46965FE7}");
     protected static Guid WPD_OBJECT_FORMAT_M4A = new Guid("{30ABA7AC-6FFD-4C23-A359-3E9B52F3F1C8}");
     protected static Guid WPD_OBJECT_FORMAT_MP3 = new Guid("{30090000-AE6C-4804-98BA-C57B46965FE7}");
@@ -54,6 +55,7 @@ class PropertiesWin32 {
     protected static Guid WPD_OBJECT_FORMAT_XML = new Guid("{BA820000-AE6C-4804-98BA-C57B46965FE7}");
     protected static Guid WPD_OBJECT_FORMAT_TEXT = new Guid("{30040000-AE6C-4804-98BA-C57B46965FE7}");
     protected static Guid WPD_OBJECT_FORMAT_MP4 = new Guid("{B9820000-AE6C-4804-98BA-C57B46965FE7}");
+    protected static Guid WPD_OBJECT_FORMAT_PROPERTIES_ONLY = new Guid("{30010000-AE6C-4804-98BA-C57B46965FE7}");
 
 
 

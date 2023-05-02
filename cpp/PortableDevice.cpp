@@ -628,7 +628,7 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
 (JNIEnv* env, jobject cls, jstring name, jstring parent, jobject file, jstring type, jstring format) {
     LPWSTR wszParent;
     wszParent = (WCHAR*)env->GetStringChars(parent, nullptr);
-    jstring s = content->addFile(env, wszParent, name, file, type);
+    jstring s = content->addFile(env, wszParent, name, file, type, format);
     if (s == nullptr) {
         return env->NewStringUTF("");
     }

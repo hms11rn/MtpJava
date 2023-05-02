@@ -22,7 +22,8 @@ class PortableDeviceContentWin32 {
     }
 
     protected String createObject(File file, String parent) throws IOException {
-        return device.addFileObjectN(file.getName(), parent, file, getFileType(file), "") ;
+        String type = probeContentType(file);
+        return device.addFileObjectN(file.getName(), parent, file, getFileType(type), getFileFormat(type));
     }
 
     protected String createFolder(String name, String parent) {
@@ -43,8 +44,7 @@ class PortableDeviceContentWin32 {
         return retObjs;
     }
 
-    private String getFileType(File file) throws IOException {
-        String type = Files.probeContentType(file.toPath());
+    private String getFileType(String type) {
         if (type == null)
             type = "";
 
@@ -63,12 +63,10 @@ class PortableDeviceContentWin32 {
 
     /**
      * Jmtp lib
-     * @param file
+     * @param type Files.probeContentType()
      * @return type of object
-     * @throws IOException
      */
-    private String getFileFormat(File file) throws IOException {
-        String type = Files.probeContentType(file.toPath());
+    private String getFileFormat(String type) {
         if (type == null)
             type = "";
 
@@ -101,6 +99,11 @@ class PortableDeviceContentWin32 {
         } else {
             return PropertiesWin32.WPD_OBJECT_FORMAT_UNSPECIFIED.toString();
         }
+    }
+
+    private String probeContentType(File file) throws IOException {
+
+        return Files.probeContentType(file.toPath());
     }
     }
 

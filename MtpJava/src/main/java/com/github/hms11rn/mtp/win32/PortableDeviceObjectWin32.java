@@ -33,18 +33,18 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
      * @param id device id
      * @return map of Strings and PropertyValue
      */
-    public static native Map<String, DeviceProperties.PropertyValue> getPropertiesN(String id);
+    public static native Map<String, Object> getPropertiesN(String id);
 
     private void loadProperties() {
         if (properties == null)
             reloadProperties();
     }
     public void reloadProperties() {
-        Map nativeProperties = getPropertiesN(id);
+        Map<String, Object> nativeProperties = getPropertiesN(id);
         Map <String, DeviceProperties.PropertyValue> ret = new HashMap<>();
 
         for (int i = 0; i < nativeProperties.size(); i++) {
-            String key = (String) new ArrayList(nativeProperties.keySet()).get(i);
+            String key = new ArrayList<>(nativeProperties.keySet()).get(i);
             Object obj = nativeProperties.get(key);
             ret.put(key, new DeviceProperties.PropertyValue(obj.getClass(), key, obj));
         }
@@ -134,7 +134,8 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
             return dateFormat.parse(ret.getStringValue());
         } catch (ParseException e) {
             throw new RuntimeException(e);
-        }    }
+        }
+    }
 
     @Override
     public PortableDeviceObject getParent() {
@@ -161,12 +162,18 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
 
     @Override
     public String getFormat() {
-        return null;
+        DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_FORMAT.toString());
+        if (ret == null)
+            return null;
+        return ret.getStringValue();
     }
 
     @Override
     public String getContentType() {
-        return null;
+        DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_CONTENT_TYPE.toString());
+        if (ret == null)
+            return null;
+        return ret.getStringValue();
     }
 
     @Override
