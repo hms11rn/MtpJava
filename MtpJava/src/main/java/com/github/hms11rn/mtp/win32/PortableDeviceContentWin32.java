@@ -29,6 +29,9 @@ class PortableDeviceContentWin32 {
     protected String createFolder(String name, String parent) {
         return device.addFolderObjectN(name, parent);
     }
+    protected void copyFile(String id, String path) {
+        device.copyFileN(id, path);
+    }
     protected boolean delete(String id) {
         return device.deleteFileN(id, 0);
     }
@@ -43,6 +46,7 @@ class PortableDeviceContentWin32 {
         }
         return retObjs;
     }
+
 
     private String getFileType(String type) {
         if (type == null)

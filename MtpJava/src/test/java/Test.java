@@ -5,6 +5,7 @@ import com.github.hms11rn.mtp.PortableDeviceManager;
 import com.github.hms11rn.mtp.content.PortableDeviceContainerObject;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
@@ -12,7 +13,7 @@ import java.util.Map;
 @SuppressWarnings("all") // Suppressing all warnings since this is a test class
 public class Test {
 
-    static void test() {
+    static void test() throws IOException {
         Mtp.register();
         PortableDeviceManager mgr = PortableDeviceManager.getDeviceManager();
         PortableDevice pd = mgr.getDevices()[0];
@@ -48,16 +49,17 @@ public class Test {
 
         System.out.println("\r\n\r\n\r\n\r\n\r\n" + j.getName());
      //    j.addFileObject(new File("C:\\Users\\*******\\Documents\\randomText2.txt"));
-       //  j.addFileObject(new File("C:\\Users\\hmsel\\Documents\\randomText3.txt"));
+     //   j.addFileObject(new File("C:\\Users\\hmsel\\Documents\\randomText3.txt"));
         for (PortableDeviceObject j1 :  j.getChildObjects()) {
             if (j1.getName().equals("randomText3.txt")) {
                 System.out.println(j1.getFormat());
-                //    j1.delete();
             }
         }
         System.out.println(j.getName());
         System.out.println(j.getDateModified());
-     //   j.createFolderObject("newFolder");
+        j.copy("C:\\Users\\hmsel\\Documents\\aaaatest");
+        //   j.createFolderObject("newFolder");
+
     }
     public static void main(String[] args) throws IOException {
         test();

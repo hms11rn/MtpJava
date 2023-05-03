@@ -67,6 +67,8 @@ extern "C" {
 	
 	JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFolderObjectN
 	(JNIEnv* env, jobject, jstring name, jstring parent);
+	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_copyFileN
+	(JNIEnv* env, jobject, jstring id, jstring path);
 
 	JNIEXPORT jboolean JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_deleteFileN
 	(JNIEnv* env, jobject, jstring id, jint recursion);

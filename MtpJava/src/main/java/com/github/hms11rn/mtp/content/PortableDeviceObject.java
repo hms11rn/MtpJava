@@ -27,6 +27,6 @@ public interface PortableDeviceObject {
       String getFormat();
       String getContentType();
       Map<String, DeviceProperties.PropertyValue> getProperties();
-
       boolean delete();
+      void copy(String path);
 }

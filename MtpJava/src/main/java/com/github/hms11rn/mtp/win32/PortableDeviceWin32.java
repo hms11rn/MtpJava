@@ -135,8 +135,9 @@ class PortableDeviceWin32 implements PortableDevice {
     protected native void closeN();
 
     protected native Map<String, String> getObjectsN(String objId);
-    protected native String addFileObjectN(String name, String parentId, File file, String contentType, String format);
-    protected native String addFolderObjectN(String name, String parentId);
+    protected native String addFileObjectN(String id, String parentId, File file, String contentType, String format);
+    protected native String addFolderObjectN(String id, String parentId);
+    protected native void copyFileN(String id, String path);
     protected native boolean deleteFileN(String id, int recursion);
 
     @Override
@@ -150,7 +151,7 @@ class PortableDeviceWin32 implements PortableDevice {
         }
         return objs;
     }
-
+    // TODO figure out why Im using string value instead of int and fix
     @Override
     public PowerSource getPowerSource() {
         String powerSource = properties.get(PropertiesWin32.WPD_DEVICE_POWER_SOURCE.toString()).getStringValue();

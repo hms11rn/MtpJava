@@ -25,6 +25,7 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
         this.id = id;
         this.content = content;
         init(id);
+        loadProperties();
 
     }
 
@@ -88,17 +89,26 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
 
     @Override
     public boolean isHidden() {
-        return false;
+        DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_ISHIDDEN.toString());
+        if (ret == null)
+            return false;
+        return ret.getBooleanValue();
     }
 
     @Override
     public boolean isSystemObject() {
-        return false;
+        DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_ISSYSTEM.toString());
+        if (ret == null)
+            return false;
+        return ret.getBooleanValue();
     }
 
     @Override
     public boolean isDrmProtected() {
-        return false;
+        DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_IS_DRM_PROTECTED.toString());
+        if (ret == null)
+            return false;
+        return ret.getBooleanValue();
     }
 
     @Override
@@ -147,18 +157,26 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
 
     @Override
     public BigInteger getSize() {
-        return null;
+        DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_SIZE.toString());
+        if (ret == null)
+            return null;
+        return ret.getBigIntegerValue();
     }
 
     @Override
     public String getPersistentUniqueIdentifier() {
-        return null;
+        DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_PERSISTENT_UNIQUE_ID.toString());
+        if (ret == null)
+            return null;
+        return ret.getStringValue();
     }
 
     @Override
     public String getSyncID() {
-        return null;
-    }
+        DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_SYNC_ID.toString());
+        if (ret == null)
+            return null;
+        return ret.getStringValue();    }
 
     @Override
     public String getFormat() {
@@ -179,5 +197,10 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
     @Override
     public boolean delete() {
         return content.delete(id);
+    }
+
+    @Override
+    public void copy(String path) {
+        content.copyFile(id, path);
     }
 }

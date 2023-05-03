@@ -26,7 +26,7 @@ IPortableDevicePropVariantCollection* PortableDeviceContentJ::getPropCollection(
 
 
 
-HRESULT StreamCopy(IPortableDeviceDataStream* pDestStream, IStream* pSourceStream, DWORD cbTransferSize, DWORD* pcbWritten);
+HRESULT StreamCopy(IStream* pDestStream, IStream* pSourceStream, DWORD cbTransferSize, DWORD* pcbWritten);
 
 IPortableDeviceValues* getCollection() {
 	if (pCollection == nullptr) {
@@ -182,6 +182,38 @@ jstring PortableDeviceContentJ::addFolder(JNIEnv* env, LPWSTR wszName, LPWSTR pa
 	outIDJava = env->NewString((jchar*)outID, wcslen(outID));
 	return outIDJava;
 }
+
+
+
+void PortableDeviceContentJ::copyFile(JNIEnv* env, LPWSTR id, LPWSTR outDir) {
+	HRESULT hr;
+	IPortableDeviceResources* pResources;
+
+	DWORD optimalBufferSize = 0;
+	CComPtr<IStream> pObjectStream;
+	CComPtr<IStream> pFileStream;
+
+	hr = pContent->Transfer(&pResources);
+	hr = pResources->GetStream(id, WPD_RESOURCE_DEFAULT, STGM_READ, &optimalBufferSize, &pObjectStream);
+	if (SUCCEEDED(hr)) {
+		hr = SHCreateStreamOnFileEx(outDir, STGM_CREATE | STGM_WRITE, 0, true, nullptr, &pFileStream);
+		if (FAILED(hr)) {
+			cout << "Failed to create file stream" << endl;
+			// handle error
+			return;
+		}
+	DWORD cbTotalBytesWritten = 0;
+	hr = StreamCopy(pFileStream, pObjectStream, optimalBufferSize, &cbTotalBytesWritten);
+	if (FAILED(hr)) {
+		cout << "Failed to copy stream" << endl;
+		//handle error
+		return;
+	}
+	fflush(stdout); // memory
+	}
+	
+
+}
 // ?????
 PortableDeviceContentJ::PortableDeviceContentJ()
 {
@@ -189,7 +221,7 @@ PortableDeviceContentJ::PortableDeviceContentJ()
 
 
 // from jmtp library
-HRESULT StreamCopy(IPortableDeviceDataStream* pDestStream, IStream* pSourceStream, DWORD cbTransferSize, DWORD* pcbWritten)
+HRESULT StreamCopy(IStream* pDestStream, IStream* pSourceStream, DWORD cbTransferSize, DWORD* pcbWritten)
 {
 	HRESULT hr = S_OK;
 

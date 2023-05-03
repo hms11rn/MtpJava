@@ -18,8 +18,20 @@ class PropertiesWin32 {
     protected static Guid WPD_OBJECT_NAME = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 4);
     protected static Guid WPD_OBJECT_CONTENT_TYPE = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 7);
     protected static Guid WPD_OBJECT_CAN_DELETE = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 26);
-    protected static Guid WPD_OBJECT_ORIGINAL_FILE_NAME = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 12); // TODO
+    protected static Guid WPD_OBJECT_ORIGINAL_FILE_NAME = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 12); //==
     protected static Guid WPD_OBJECT_PARENT_ID = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 3);
+    protected static Guid WPD_OBJECT_ISHIDDEN = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 9); // ==
+    protected static Guid WPD_OBJECT_ISSYSTEM = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 10); // ==
+    protected static Guid WPD_OBJECT_IS_DRM_PROTECTED = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 17); // ==
+    protected static Guid WPD_OBJECT_SIZE = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 11); // ==
+    protected static Guid WPD_OBJECT_SYNC_ID = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 16); // ==
+
+
+
+
+
+
+
     // Date
     protected static Guid WPD_OBJECT_DATE_CREATED = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 18);
     protected static Guid WPD_OBJECT_DATE_MODIFIED = new Guid("{EF6B490D-5CD8-437A-AFFC-DA8B60EE4A3C}", 19);
@@ -117,8 +129,3 @@ class PropertiesWin32 {
         return null;
     }
 }
-
-/*
-TODO
-WPD_OBJECT_FORMAT
- */

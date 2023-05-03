@@ -37,6 +37,7 @@ jobject keyAndValues(JNIEnv* env, LPWSTR id) {
 		 cout << "hr failed at getValues: " << hr << endl;
 	 }
 	jobject keyAndValuesJava = GetKeyAndValuesMap(env, coll, &deviceValues);
+	
 	return keyAndValuesJava;
 }
 

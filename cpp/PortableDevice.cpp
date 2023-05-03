@@ -18,6 +18,24 @@ IPortableDeviceValues* pClientValues;
 IPortableDevicePropVariantCollection* propVariantCollections = nullptr;
 //
 PortableDeviceContentJ* content;
+IPortableDeviceService* pService; // future
+IPortableDeviceContent2* pContent2; // future
+
+IPortableDeviceService* getService() {
+    if (pService == nullptr) {
+        HRESULT hr = CoCreateInstance
+        (CLSID_PortableDeviceService, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pService));
+        if (FAILED(hr)) {
+            // handle error;
+        }
+    }
+    return pService;
+}
+IPortableDeviceContent2* getContent2() {
+    IPortableDeviceService* service = getService();
+    service->Content(&pContent2);
+    return pContent2;
+}
 
 IPortableDeviceKeyCollection* contentTypeKey;
 
@@ -191,7 +209,6 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
 JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getProperties
 (JNIEnv* env, jclass, jstring deviceID) {
     IPortableDeviceContent* pContent;
-
     LPWSTR wszDeviceID;
     LPWSTR wszFirmwareVersion = NULL;
     DWORD dwFirmwareVersionLength{};
@@ -647,6 +664,17 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     if (s == nullptr)
         return env->NewStringUTF("");
     return s;
+}
+
+JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_copyFileN(JNIEnv* env, jobject, jstring id, jstring path)
+{
+    LPWSTR wszObjectID;
+    LPWSTR wszPath;
+
+    wszObjectID = (WCHAR*)env->GetStringChars(id, nullptr);
+    wszPath = (WCHAR*)env->GetStringChars(path, nullptr);
+    content->copyFile(env, wszObjectID, wszPath);
+
 }
 
 
