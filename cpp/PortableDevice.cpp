@@ -10,6 +10,8 @@
 
 using namespace std;
 
+jstring deviceID;
+
 IPortableDeviceProperties* pProperties;
 
 BOOL isOpen = false;
@@ -133,10 +135,8 @@ HRESULT InitializePortableDevice()
 
     return S_OK;
 }
-
-JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getFriendlyName
-(JNIEnv* env, jclass, jstring deviceID) {
-    IPortableDeviceManager *pDeviceManager;
+jstring getFriendlyName(JNIEnv* env, jstring deviceID) {
+    IPortableDeviceManager* pDeviceManager;
     LPWSTR wszDeviceID;
     LPWSTR wszDeviceFriendlyName;
     DWORD length{};
@@ -156,13 +156,17 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
 
     return friendlyName;
 }
+JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getFriendlyName
+(JNIEnv* env, jclass, jstring deviceID) {
+    return getFriendlyName(env, deviceID);
+}
 
 JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getManufacturer
 (JNIEnv* env, jclass, jstring deviceID) {
 
     IPortableDeviceManager* pDeviceManager;
     LPWSTR wszDeviceID;
-    PWSTR wszDeviceManufacturer;
+    LPWSTR wszDeviceManufacturer;
     DWORD length{};
     jstring manufacturer;
 
@@ -210,29 +214,21 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
 (JNIEnv* env, jclass, jstring deviceID) {
     IPortableDeviceContent* pContent;
     LPWSTR wszDeviceID;
-    LPWSTR wszFirmwareVersion = NULL;
-    DWORD dwFirmwareVersionLength{};
-    PROPERTYKEY guidFirmwareVersion = WPD_DEVICE_FIRMWARE_VERSION;
     wszDeviceID = (WCHAR*)env->GetStringChars(deviceID, NULL);
     HRESULT hr;
 
     // Get the device manager
     IPortableDevice* pDevice = nullptr;
     pDevice = getPortableDevice();
-    if (!isOpen) {
-        hr = OpenDevice(wszDeviceID, &pDevice, L"Java Mtp Library", 1, 0, 0);
-        if (FAILED(hr))
-        {
-            cout << "mtp:2 hr failed hr = " << hr << endl;
-            // Handle error
-            return nullptr;
-        }
-    }
     // Get the device properties
     hr = pDevice->Content(&pContent);
     if (FAILED(hr))
     {
-        cout << "mtp:3 hr failed hr = " << hr << endl;
+        if (hr == E_WPD_DEVICE_NOT_OPEN || hr == E_POINTER) {
+            jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/DeviceClosedException");
+            string devIdChar = env->GetStringUTFChars(getFriendlyName(env, deviceID), nullptr);
+            env->ThrowNew(deviceClosedException, devIdChar.append(" is not opened. use PortableDevice#open() to open").c_str());
+        }
         // Handle error
         return nullptr;
     }
@@ -245,11 +241,9 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     {
         cout << "mtp:4 hr failed hr = " << hr << endl;
         // Handle error
-        pContent->Release();
         return nullptr;
     }
 
-    // Get the manufacturer property
     IPortableDeviceKeyCollection* deviceKeys{};
     hr = pProperties->GetSupportedProperties(WPD_DEVICE_OBJECT_ID, &deviceKeys);
     if (FAILED(hr)) {
@@ -290,12 +284,15 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
         // fill value
         wstring s = pszName;
         s.append(to_wstring(pszId));
+
         // key for java return value: format {guid}pid
         jstring keyJava = env->NewString((jchar*)s.c_str(), wcslen(s.c_str()));
-        // value of key
-        PROPVARIANT valueAt;
+
+        CoTaskMemFree(pszName); // pszName is no longer need, free memory
+        s.clear(); // s is no longer need as java key was created
+
+        PROPVARIANT valueAt; // value of key
         hr = (*values)->GetValue(keyName, &valueAt);
-        // if value is array
         VARTYPE valueType = valueAt.vt;
         switch (valueType) {
         case VT_LPWSTR: {
@@ -366,8 +363,7 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
             break;
         }
         
-        case VT_ARRAY: {
-            
+        case VT_ARRAY: { // TODO I don't know if this works       
             LPSAFEARRAY* arr = valueAt.pparray;
             SAFEARRAY* psa = reinterpret_cast<SAFEARRAY*>(arr);
             // Get a pointer to the array data
@@ -513,12 +509,12 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_ope
     LPWSTR wszDeviceID;
     jfieldID fid;
     jstring jsDeviceID;
-    releasePortableDeviceValues();
     pDevice = getPortableDevice();
     fid = env->GetFieldID(env->GetObjectClass(obj), "deviceID", "Ljava/lang/String;");
     jsDeviceID = (jstring)env->GetObjectField(obj, fid);
     wszDeviceID = (WCHAR*)env->GetStringChars(jsDeviceID, NULL);
     if (isOpen) {
+        env->ReleaseStringChars(jsDeviceID, (jchar*)wszDeviceID);
         return;
     }
     hr = OpenDevice(wszDeviceID, &pDevice, L"Unknown-MtpLibJava", 1, 0, 0);
@@ -526,6 +522,7 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_ope
     {
         cout << "couldnt open device" << endl;
     }
+    env->ReleaseStringChars(jsDeviceID, (jchar*)wszDeviceID);;
 }
 
 JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_closeN
@@ -590,29 +587,32 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
  
     
     // get root objects
-    HRESULT hr = pDevice->Content(&pContent);
-    if (FAILED(hr)) {
-        cout << "pDevice->Content failed: " << hr << endl;
-        // Handle the error
-        return nullptr;
-    }
-    
+    pContent = content->getContent();
     IEnumPortableDeviceObjectIDs* pEnum = nullptr;
-    hr = pContent->EnumObjects(0, objId, nullptr, &pEnum);
+    HRESULT hr = pContent->EnumObjects(0, objId, nullptr, &pEnum);
     if (FAILED(hr)) {
         cout << "pDeviceContent->EnumObjects failed: " << hr << endl;
-        // Handle the error        pContent->Release();
+        env->ReleaseStringChars(jdeviceID, (jchar*)wszDeviceID);
+        if (hr == E_POINTER || hr == E_WPD_DEVICE_NOT_OPEN) {
+            jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/DeviceClosedException");
+            string devIdChar = env->GetStringUTFChars(getFriendlyName(env, jdeviceID), nullptr);
+            env->ThrowNew(deviceClosedException, devIdChar.append(" is not opened. use PortableDevice#open() to open").c_str());
+            devIdChar.clear();
+        }
+        
         return nullptr;
+    
     }
     DWORD dwFetched = 0;
     LPWSTR szObjectID = nullptr;
-    
+    jstring idJava;
+    jstring contentTypeJava;
     while (SUCCEEDED(pEnum->Next(1, &szObjectID, &dwFetched)) && (dwFetched > 0)) {
         IPortableDeviceValues* contentTypeValue;
         pProperties->GetValues(szObjectID, getContentTypeKey(), &contentTypeValue);
         GUID contentType;
         contentTypeValue->GetGuidValue(WPD_OBJECT_CONTENT_TYPE, &contentType);
-        jstring contentTypeJava = env->NewStringUTF("UNKNOWN");
+        contentTypeJava = env->NewStringUTF("UNKNOWN");
         if (contentType == WPD_CONTENT_TYPE_FOLDER) {
             contentTypeJava = env->NewStringUTF("CONTENT_TYPE_FOLDER");
         }
@@ -631,21 +631,37 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
             contentTypeJava = env->NewStringUTF("CONTENT_TYPE_FILE");
         }
 
-        jstring idJava = env->NewString((jchar*)szObjectID, wcslen(szObjectID));
+        idJava = env->NewString((jchar*)szObjectID, wcslen(szObjectID));
         env->CallObjectMethod(hashMap, put, idJava, contentTypeJava);
-        
+        env->DeleteLocalRef(idJava);
+        env->DeleteLocalRef(contentTypeJava);
+        contentTypeValue->Release();
         CoTaskMemFree(szObjectID);
         szObjectID = nullptr;
     }
+    env->ReleaseStringChars(jdeviceID, (jchar*) wszDeviceID);
+    env->ReleaseStringChars(objIdJava, (jchar*) objId);
     pEnum->Release();
     return hashMap;
 }
 
 JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFileObjectN
 (JNIEnv* env, jobject cls, jstring name, jstring parent, jobject file, jstring type, jstring format) {
+    HRESULT hr = S_OK;
+
     LPWSTR wszParent;
     wszParent = (WCHAR*)env->GetStringChars(parent, nullptr);
-    jstring s = content->addFile(env, wszParent, name, file, type, format);
+    jstring s = content->addFile(env, wszParent, name, file, type, format, &hr);
+    cout << hr << endl;
+    if (hr == E_POINTER) {
+        jfieldID fid = env->GetFieldID(env->GetObjectClass(cls), "deviceID", "Ljava/lang/String;");
+        jstring jsDeviceID = (jstring)env->GetObjectField(cls, fid);
+        jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/DeviceClosedException");
+        jstring friendlyName = getFriendlyName(env, jsDeviceID);
+        string devIdChar = env->GetStringUTFChars(friendlyName, nullptr);
+        env->ThrowNew(deviceClosedException, devIdChar.append(" is not opened. use PortableDevice#open() to open").c_str());
+        env->DeleteLocalRef(jsDeviceID);
+    }
     if (s == nullptr) {
         return env->NewStringUTF("");
     }
@@ -677,14 +693,46 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_cop
 
 }
 
+                                                                  
+JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_updatePropertyN(JNIEnv* env, jobject, jstring id, jstring fmtid, jint pid, jstring value)
+{
+    LPWSTR wszObjectID;
+    LPWSTR wszGuid;
+    LPWSTR wszValue;
 
+    GUID guid;
+    wszObjectID = (WCHAR*)env->GetStringChars(id, nullptr);
+    wszGuid = (WCHAR*)env->GetStringChars(fmtid, nullptr);
+    wszValue = (WCHAR*)env->GetStringChars(value, nullptr);
+    CLSIDFromString(wszGuid, &guid);
+    content->updateProperty(env, wszObjectID, guid, pid, wszValue);
+    env->ReleaseStringChars(id, (jchar*)wszObjectID);
+    env->ReleaseStringChars(fmtid, (jchar*)wszGuid);
+    env->ReleaseStringChars(value, (jchar*)wszValue);
+
+}
+
+    
 JNIEXPORT jboolean JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_deleteFileN(JNIEnv* env, jobject, jstring id, jint recursion)
 {
     LPWSTR wszObjectID;
     wszObjectID = (WCHAR*)env->GetStringChars(id, nullptr);
     BOOL success = content->deleteFile(wszObjectID, recursion);
+    env->ReleaseStringChars(id, (jchar*) wszObjectID);
     return success;
 }
+
+JNIEXPORT jbyteArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getBytesN(JNIEnv* env, jobject, jstring id) {
+    LPWSTR wszObjectID;
+    wszObjectID = (WCHAR*)env->GetStringChars(id, nullptr);
+    
+    jbyteArray b;
+    b = content->getBytes(env, wszObjectID);
+    env->ReleaseStringChars(id, (jchar*)wszObjectID);
+
+    return b;
+}
+
 /*
  PROPVARIANT varPUIID = {};
         PropVariantInit(&varPUIID);

@@ -1,11 +1,13 @@
 package com.github.hms11rn.mtp.win32;
 
 import com.github.hms11rn.mtp.DeviceProperties;
+import com.github.hms11rn.mtp.content.PortableDeviceContainerObject;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
 
 import static com.github.hms11rn.mtp.win32.PropertiesWin32.*;
 
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -40,6 +42,8 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
         if (properties == null)
             reloadProperties();
     }
+
+    @Override
     public void reloadProperties() {
         Map<String, Object> nativeProperties = getPropertiesN(id);
         Map <String, DeviceProperties.PropertyValue> ret = new HashMap<>();
@@ -148,11 +152,11 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
     }
 
     @Override
-    public PortableDeviceObject getParent() {
+    public PortableDeviceContainerObject getParent() {
         DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_PARENT_ID.toString());
         if (ret == null)
             return null;
-        return new PortableDeviceObjectWin32(ret.getStringValue(), content);
+        return new PortableDeviceContainerObjectWin32(ret.getStringValue(), content);
     }
 
     @Override
@@ -196,11 +200,19 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
 
     @Override
     public boolean delete() {
-        return content.delete(id);
+        return content.delete(id, 0);
     }
 
     @Override
     public void copy(String path) {
         content.copyFile(id, path);
+    }
+    @Override
+    public void rename(String newName) {
+        content.rename(id, newName);
+    }
+    @Override
+    public InputStream getInputStream() {
+        return new PortableDeviceInputStreamWin32(content.getBytes(id));
     }
 }

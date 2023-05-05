@@ -5,11 +5,14 @@ import com.github.hms11rn.mtp.content.PortableDeviceObject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 class PortableDeviceContentWin32 {
 
     final PortableDeviceWin32 device;
+
     protected PortableDeviceContentWin32(PortableDeviceWin32 device) {
         this.device = device;
     }
@@ -32,9 +35,14 @@ class PortableDeviceContentWin32 {
     protected void copyFile(String id, String path) {
         device.copyFileN(id, path);
     }
-    protected boolean delete(String id) {
-        return device.deleteFileN(id, 0);
+    protected boolean delete(String id, int recursive) {
+        return device.deleteFileN(id, recursive);
     }
+    protected List<String> getObjectsIDs(String id) {
+        Map<String, String> objectIDs;
+        objectIDs = device.getObjectsN(id);
+        return new ArrayList<>(objectIDs.keySet());
+    } // TODO implement getObjectIDs
     protected PortableDeviceObject[] getObjects(String containerId) {
         Map<String, String> objects;
         objects = device.getObjectsN(containerId);
@@ -47,6 +55,14 @@ class PortableDeviceContentWin32 {
         return retObjs;
     }
 
+    protected void rename(String id, String newName) {
+        device.updatePropertyN(id, PropertiesWin32.WPD_OBJECT_NAME.guid, PropertiesWin32.WPD_OBJECT_NAME.pid, newName);
+        device.updatePropertyN(id, PropertiesWin32.WPD_OBJECT_ORIGINAL_FILE_NAME.guid, PropertiesWin32.WPD_OBJECT_ORIGINAL_FILE_NAME.pid, newName);
+    }
+
+    protected byte[] getBytes(String id) {
+        return device.getBytesN(id);
+    }
 
     private String getFileType(String type) {
         if (type == null)
@@ -105,6 +121,9 @@ class PortableDeviceContentWin32 {
         }
     }
 
+    /**
+     * Single method to probe content type to avoid probing the content twice for both file format and file type
+     */
     private String probeContentType(File file) throws IOException {
 
         return Files.probeContentType(file.toPath());

@@ -16,6 +16,10 @@ IPortableDevice* getPortableDevice();
 HRESULT InitializePortableDevice();
 void closePortableDevice();
 
+jstring getFriendlyName(JNIEnv* env, jstring deviceID);
+
+
+
 HRESULT OpenDevice(LPCWSTR wszPnPDeviceID, IPortableDevice** ppDevice, LPCWSTR, int, int, int);
 jobject GetKeyAndValuesMap(JNIEnv*, IPortableDeviceKeyCollection*, IPortableDeviceValues**);
 
@@ -69,9 +73,14 @@ extern "C" {
 	(JNIEnv* env, jobject, jstring name, jstring parent);
 	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_copyFileN
 	(JNIEnv* env, jobject, jstring id, jstring path);
+	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_updatePropertyN
+	(JNIEnv* env, jobject, jstring id, jstring fmtid, jint pid, jstring value);
 
 	JNIEXPORT jboolean JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_deleteFileN
 	(JNIEnv* env, jobject, jstring id, jint recursion);
+
+	JNIEXPORT jbyteArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getBytesN(JNIEnv* env, jobject, jstring id);
+
 
 #ifdef __cplusplus
 }

@@ -9,4 +9,8 @@ public interface PortableDeviceContainerObject extends PortableDeviceObject {
      PortableDeviceObject addFileObject(File file) throws IOException;
      PortableDeviceFolderObject createFolderObject(String name);
 
+     @Override
+     default boolean isContainer() {
+          return true;
+     }
 }

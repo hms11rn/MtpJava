@@ -4,8 +4,6 @@ import com.github.hms11rn.mtp.PortableDevice;
 import com.github.hms11rn.mtp.PortableDeviceManager;
 
 class PortableDeviceManagerWin32 implements PortableDeviceManager {
-    private PortableDevice[] portableDevices;
-
     @Override
     public PortableDevice[] getDevices() {
         String[] iDs = getDeviceID();
@@ -24,5 +22,5 @@ class PortableDeviceManagerWin32 implements PortableDeviceManager {
     @Override
     public native String[] getDeviceID();
 
-
+    // TODO refresh device list
 }

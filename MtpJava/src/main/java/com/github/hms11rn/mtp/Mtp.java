@@ -4,7 +4,6 @@ public class Mtp {
 
     /**
      * Test method for jni
-     * @return
      */
     public static native String[] getMtpNames();
 

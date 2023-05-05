@@ -7,6 +7,7 @@ import com.github.hms11rn.mtp.content.PortableDeviceObject;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 public class PortableDeviceContainerObjectWin32 extends PortableDeviceObjectWin32 implements PortableDeviceContainerObject {
     protected PortableDeviceContainerObjectWin32(String id, PortableDeviceContentWin32 content) {
@@ -31,6 +32,11 @@ public class PortableDeviceContainerObjectWin32 extends PortableDeviceObjectWin3
     }
 
     @Override
+    public boolean delete() {
+        return content.delete(id, 1);
+    }
+
+    @Override
     public void copy(String path) {
         File pathFile = new File(path);
         if (!pathFile.exists())
@@ -38,7 +44,12 @@ public class PortableDeviceContainerObjectWin32 extends PortableDeviceObjectWin3
         copyFolder(path);
     }
 
-        private void copyFolder(String path) {
+    @Override
+    public InputStream getInputStream() {
+        throw new UnsupportedOperationException("Container Objects do not have any resources attached");
+    }
+
+    private void copyFolder(String path) {
             PortableDeviceObject[] objects = getChildObjects();
             for (PortableDeviceObject obj : objects) {
                 if (!(obj instanceof PortableDeviceContainerObject)) {

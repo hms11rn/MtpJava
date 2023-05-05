@@ -22,7 +22,6 @@ public interface PortableDevice {
     boolean IsNonConsumableSupported();
     PowerSource getPowerSource();
     void reloadProperties();
-    // device content
 
      void open();
      void close();

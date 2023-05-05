@@ -12,7 +12,7 @@ import java.util.Map;
 class PortableDeviceWin32 implements PortableDevice {
     private final String deviceID;
 
-    private boolean isOpened;
+    private boolean isOpen;
 
     private Map<String, Object> nativeProperties;
     private Map<String, DeviceProperties.PropertyValue> properties;
@@ -21,7 +21,7 @@ class PortableDeviceWin32 implements PortableDevice {
     PortableDeviceWin32(String deviceID) {
         this.deviceID = deviceID;
         this.content = new PortableDeviceContentWin32(this);
-        reloadProperties(); // load in properties
+        //   reloadProperties(); // load in properties
     }
     /**
      * 0: name
@@ -44,6 +44,7 @@ class PortableDeviceWin32 implements PortableDevice {
         nativeProperties = getProperties(deviceID);
         if (nativeProperties == null) {
             System.err.println("Native Properties are Null");
+
         }
 
         Map<String, DeviceProperties.PropertyValue> ret = new HashMap<>();
@@ -52,8 +53,6 @@ class PortableDeviceWin32 implements PortableDevice {
             Object obj = nativeProperties.get(key);
             ret.put(key, new DeviceProperties.PropertyValue(obj.getClass(), key, obj));
         }
-        if (!isOpened)
-            close();
         this.properties = ret;
     }
 
@@ -121,13 +120,13 @@ class PortableDeviceWin32 implements PortableDevice {
     @Override
     public void open() {
         openN();
-        isOpened = true;
+        isOpen = true;
     }
 
     @Override
     public void close() {
         closeN();
-        isOpened = false;
+        isOpen = false;
     }
 
     protected native void openN();
@@ -139,6 +138,8 @@ class PortableDeviceWin32 implements PortableDevice {
     protected native String addFolderObjectN(String id, String parentId);
     protected native void copyFileN(String id, String path);
     protected native boolean deleteFileN(String id, int recursion);
+    protected native void updatePropertyN(String id, String fmtid, int pid, String value);
+    protected native byte[] getBytesN(String id);
 
     @Override
     public PortableDeviceObject[] getRootObjects() {
@@ -151,7 +152,7 @@ class PortableDeviceWin32 implements PortableDevice {
         }
         return objs;
     }
-    // TODO figure out why Im using string value instead of int and fix
+    // TODO figure out why Im using string value instead of int and fix (forgot)
     @Override
     public PowerSource getPowerSource() {
         String powerSource = properties.get(PropertiesWin32.WPD_DEVICE_POWER_SOURCE.toString()).getStringValue();

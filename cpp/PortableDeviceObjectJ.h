@@ -14,12 +14,10 @@ extern "C" {
 	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceObjectWin32_init
 	(JNIEnv* env, jobject, jstring);
 
+
 #ifdef __cplusplus
 }
 #endif
 #endif
 
 jobject keyAndValues(JNIEnv* env, LPWSTR id);
-
-
-	
