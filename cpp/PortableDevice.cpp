@@ -647,11 +647,10 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
 JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFileObjectN
 (JNIEnv* env, jobject cls, jstring name, jstring parent, jobject file, jstring type, jstring format) {
     HRESULT hr = S_OK;
-
     LPWSTR wszParent;
+
     wszParent = (WCHAR*)env->GetStringChars(parent, nullptr);
     jstring s = content->addFile(env, wszParent, name, file, type, format, &hr);
-    cout << hr << endl;
     if (hr == E_POINTER || hr == E_WPD_DEVICE_NOT_OPEN) {
         jfieldID fid = env->GetFieldID(env->GetObjectClass(cls), "deviceID", "Ljava/lang/String;");
         jstring jsDeviceID = (jstring)env->GetObjectField(cls, fid);
@@ -664,7 +663,26 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     if (s == nullptr) {
         return env->NewStringUTF("");
     }
-    
+    env->ReleaseStringChars(parent, (jchar*)wszParent);
+    return s;
+}
+
+JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFileFromInputStreamN(JNIEnv* env, jobject, jstring name, jstring parent, jobject inputStream, jstring type, jstring format)
+{
+    LPWSTR wszName;
+    LPWSTR wszParent;
+    LPWSTR wszType;
+    LPWSTR wszFormat;
+    wszName = (WCHAR*)env->GetStringChars(name, nullptr);
+    wszParent = (WCHAR*)env->GetStringChars(parent, nullptr);
+    wszType = (WCHAR*)env->GetStringChars(type, nullptr);
+    wszFormat = (WCHAR*)env->GetStringChars(format, nullptr);
+    jstring s = content->addFileFromInputStream(env, wszParent, wszName, inputStream, wszType, wszFormat);
+
+    env->ReleaseStringChars(name, (jchar*)wszName);
+    env->ReleaseStringChars(parent, (jchar*)wszParent);
+    env->ReleaseStringChars(type, (jchar*)wszType);
+    env->ReleaseStringChars(format, (jchar*)wszFormat);
     return s;
 }
 

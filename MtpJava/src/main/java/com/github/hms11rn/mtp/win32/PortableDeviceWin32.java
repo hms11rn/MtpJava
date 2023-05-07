@@ -5,6 +5,7 @@ import com.github.hms11rn.mtp.PortableDevice;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -134,7 +135,8 @@ class PortableDeviceWin32 implements PortableDevice {
     protected native void closeN();
 
     protected native Map<String, String> getObjectsN(String objId);
-    protected native String addFileObjectN(String id, String parentId, File file, String contentType, String format);
+    protected native String addFileObjectN(String name, String parentID, File file, String contentType, String format);
+    protected native String addFileFromInputStreamN(String name, String parentID, InputStream inStream, String contentType, String format);
     protected native String addFolderObjectN(String id, String parentId);
     protected native void copyFileN(String id, String path);
     protected native boolean deleteFileN(String id, int recursion);

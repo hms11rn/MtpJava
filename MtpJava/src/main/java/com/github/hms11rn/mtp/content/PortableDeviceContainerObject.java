@@ -8,7 +8,8 @@ public interface PortableDeviceContainerObject extends PortableDeviceObject {
 
      PortableDeviceObject[] getChildObjects();
      PortableDeviceObject addFileObject(File file) throws IOException;
-     PortableDeviceObject addFileObject(InputStream is);
+     PortableDeviceObject addFileObject(InputStream is, String name);
+     PortableDeviceObject addFileObject(InputStream is, String name, String mimeType);
      PortableDeviceFolderObject createFolderObject(String name);
 
      @Override

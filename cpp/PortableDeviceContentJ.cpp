@@ -181,6 +181,91 @@ jstring PortableDeviceContentJ::addFile(JNIEnv* env, LPWSTR parent, jstring java
 	return nullptr;
 }
 
+jstring PortableDeviceContentJ::addFileFromInputStream(JNIEnv* env, LPWSTR parent, LPWSTR name, jobject inputStream, LPWSTR type, LPWSTR format) {
+	
+	HRESULT hr;
+
+	CComPtr<IStream> pInStream;
+	CComPtr<IStream> pDeviceStream;
+	CComPtr<IPortableDeviceDataStream> pDeviceDataStream;
+	
+	DWORD dwSize = 0;
+	DWORD dwBufferSize = 0;
+	DWORD totalBytesWritten = 0;
+
+	ULONG ulBytesWritten;
+
+	LPWSTR wszObjectID;
+
+	IPortableDeviceValues* pValues;
+
+	GUID contentTypeGuid;
+	GUID contentFormatGuid;
+
+	jstring jObjectID; 
+	jclass clsInputStream;
+	jmethodID jStreamRead;
+	jmethodID jStreamAvailable; // In General its not recommended to use available()I
+	jbyteArray bytesFromIS;
+	jbyte* bytes;
+	jint bufferSize = 4096;
+	
+
+	clsInputStream = env->FindClass("java/io/InputStream");
+	bytesFromIS = env->NewByteArray(bufferSize);
+	
+	jStreamRead = env->GetMethodID(clsInputStream, "read", "([B)I");
+	jStreamAvailable = env->GetMethodID(clsInputStream, "available", "()I");
+
+
+	// Copy Stream
+	dwSize = env->CallIntMethod(inputStream, jStreamRead, bytesFromIS);
+	bytes = env->GetByteArrayElements(bytesFromIS, nullptr);
+
+	HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE, dwSize);
+	BYTE* hGlobalBytes = (BYTE*)GlobalLock(hGlobal);
+	memcpy(hGlobalBytes, bytes, dwSize);
+	GlobalUnlock(hGlobal);
+	hr = CreateStreamOnHGlobal(hGlobal, true, &pInStream);
+	// Finished copying stream
+
+	hr = CLSIDFromString(type, &contentTypeGuid);
+	hr = CLSIDFromString(format, &contentFormatGuid);
+
+	if (SUCCEEDED(hr)) {
+		pValues = getCollection();
+		pValues->SetStringValue(WPD_OBJECT_NAME, name);
+		pValues->SetStringValue(WPD_OBJECT_ORIGINAL_FILE_NAME, name);
+		pValues->SetStringValue(WPD_OBJECT_PARENT_ID, parent);
+		pValues->SetGuidValue(WPD_OBJECT_CONTENT_TYPE, contentTypeGuid);
+		pValues->SetGuidValue(WPD_OBJECT_FORMAT, contentFormatGuid);
+		pValues->SetUnsignedLargeIntegerValue(WPD_OBJECT_SIZE, dwSize);
+		
+		hr = pContent->CreateObjectWithPropertiesAndData(pValues, &pDeviceStream, &dwBufferSize, nullptr);
+		if (SUCCEEDED(hr)) {
+			hr = pDeviceStream->QueryInterface(IID_IPortableDeviceDataStream, (void**)&pDeviceDataStream);
+			hr = StreamCopy(pDeviceDataStream, pInStream, dwBufferSize, &totalBytesWritten);
+			if (hr == 0x80070050) {
+				jclass generalPortableDeviceException = env->FindClass("com/github/hms11rn/mtp/PortableDeviceException");
+				env->ThrowNew(generalPortableDeviceException, "Could not write to file (Does that file already exist?)");
+				GlobalFree(hGlobal);
+				return nullptr;
+			}
+			hr = pDeviceDataStream->Commit(STGC_DEFAULT);
+			if (SUCCEEDED(hr))
+			{
+				pDeviceDataStream->GetObjectID(&wszObjectID);
+				jObjectID = (jstring)env->NewString((jchar*)wszObjectID, wcslen(wszObjectID));
+				CoTaskMemFree(wszObjectID);
+				GlobalFree(hGlobal);
+				return jObjectID;
+			}
+		}
+	}
+	GlobalFree(hGlobal);
+	return nullptr;
+}
+
 jstring PortableDeviceContentJ::addFolder(JNIEnv* env, LPWSTR wszName, LPWSTR parent)
 {
 	HRESULT hr;

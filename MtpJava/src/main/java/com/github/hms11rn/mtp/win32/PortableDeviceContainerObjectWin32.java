@@ -27,9 +27,14 @@ public class PortableDeviceContainerObjectWin32 extends PortableDeviceObjectWin3
     }
 
     @Override
-    public PortableDeviceObject addFileObject(InputStream is) {
+    public PortableDeviceObject addFileObject(InputStream is, String name) {
         // TODO implement adding file using an input stream
-        return null;
+        return new PortableDeviceObjectWin32(content.addFileFromInputStream(name, id, is), content);
+    }
+    @Override
+    public PortableDeviceObject addFileObject(InputStream is, String name, String mimeType) {
+        // TODO implement adding file using an input stream
+        return new PortableDeviceObjectWin32(content.addFileFromInputStream(name, id, is, mimeType), content);
     }
 
     @Override

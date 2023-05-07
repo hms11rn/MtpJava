@@ -15,6 +15,7 @@ class PortableDeviceContentJ
 		
 		IPortableDeviceProperties* getProperties();
 		jstring addFile(JNIEnv* env, LPWSTR parent, jstring, jobject, jstring contentType, jstring contentFormat, HRESULT*);
+		jstring addFileFromInputStream(JNIEnv* env, LPWSTR parent, LPWSTR name, jobject inputStream, LPWSTR type, LPWSTR format);
 		jstring addFolder(JNIEnv* env, LPWSTR javaName, LPWSTR parent);
 		void copyFile(JNIEnv* env, LPWSTR id, LPWSTR outDir);
 		void updateProperty(JNIEnv* env, LPWSTR id, GUID category, DWORD pid, LPWSTR value);

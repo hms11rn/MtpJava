@@ -67,6 +67,9 @@ extern "C" {
 
 	JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFileObjectN
 	(JNIEnv* env, jobject, jstring name, jstring parent, jobject file, jstring type, jstring format);
+
+	JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFileFromInputStreamN
+	(JNIEnv* env, jobject, jstring name, jstring parent, jobject inputStream, jstring type, jstring format);
 	
 	JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFolderObjectN
 	(JNIEnv* env, jobject, jstring name, jstring parent);
@@ -79,6 +82,8 @@ extern "C" {
 	(JNIEnv* env, jobject, jstring id, jint recursion);
 
 	JNIEXPORT jbyteArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getBytesN(JNIEnv* env, jobject, jstring id);
+
+
 
 
 #ifdef __cplusplus

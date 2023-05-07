@@ -4,7 +4,9 @@ import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,7 +31,22 @@ class PortableDeviceContentWin32 {
         String type = probeContentType(file);
         return device.addFileObjectN(file.getName(), parent, file, getFileType(type), getFileFormat(type));
     }
+    protected String addFileFromInputStream(String name, String parentID, InputStream inStream) {
 
+        return device.addFileFromInputStreamN(name, parentID, inStream, PropertiesWin32.WPD_CONTENT_TYPE_DOCUMENT.toString(),
+                        PropertiesWin32.WPD_OBJECT_FORMAT_UNSPECIFIED.toString());
+    }
+
+    /**
+     * Use {@link Files#probeContentType(Path)} to obtain mime  of file,
+     * or a library like Apache Tika
+     * @return newly craeted object ID
+     */
+    protected String addFileFromInputStream(String name, String parentID, InputStream inStream, String mimeType) {
+        String type = getFileType(mimeType);
+        String format = getFileFormat(mimeType);
+        return device.addFileFromInputStreamN(name, parentID, inStream, type, format);
+    }
     protected String createFolder(String name, String parent) {
         return device.addFolderObjectN(name, parent);
     }
