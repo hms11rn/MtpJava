@@ -81,8 +81,23 @@ public interface PortableDeviceObject {
       String getContentType();
       Map<String, DeviceProperties.PropertyValue> getProperties();
       void reloadProperties();
-      boolean delete();
+
+      /**
+       * Delete object<br>
+       * in Windows do to a bug, the first deletion after the device was connected it's going
+       * to take 5-15 seconds to after deletion until the device is available again
+       */
+      void delete();
+
+      /**
+       * copy the object to a file outside.
+       * @param path to output device
+       */
       void copy(String path);
       void rename(String newName);
+      /**
+       * Get input stream of the content in device
+       * @return
+       */
       InputStream getInputStream();
  }

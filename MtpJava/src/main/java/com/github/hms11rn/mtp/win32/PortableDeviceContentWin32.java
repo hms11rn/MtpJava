@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,8 +36,16 @@ class PortableDeviceContentWin32 {
     protected void copyFile(String id, String path) {
         device.copyFileN(id, path);
     }
+
+    protected HashMap<String, Boolean> b = new HashMap<>();
+
+    /**
+     *  There is a bug with WPD Api that causes weird hanging, TODO attempt to fix it
+     */
     protected boolean delete(String id, int recursive) {
-        return device.deleteFileN(id, recursive);
+      boolean did =  device.deleteFileN(id, recursive);
+      b.put(id, did);
+      return false;
     }
     protected List<String> getObjectsIDs(String id) {
         Map<String, String> objectIDs;

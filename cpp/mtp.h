@@ -11,11 +11,10 @@ extern "C" {
 #endif
 /*
  * Class:     com_github_hms11rn_Mtp
- * Method:    getMtpNames
- * Signature: ()[Ljava/lang/String;
+ * Method:    registerJNI
  */
-JNIEXPORT jobjectArray JNICALL Java_com_github_hms11rn_mtp_Mtp_getMtpNames
-  (JNIEnv *, jclass);
+JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_Mtp_registerJNI
+  (JNIEnv *);
 
 #ifdef __cplusplus
 }
@@ -23,5 +22,5 @@ JNIEXPORT jobjectArray JNICALL Java_com_github_hms11rn_mtp_Mtp_getMtpNames
 #endif
 
 
-void handleException(char* name);
+void handleException(const char* type, const char* name, HRESULT hr);
 jobject ConvertUnsignedLongLongToJava(JNIEnv* env, ULONGLONG number);

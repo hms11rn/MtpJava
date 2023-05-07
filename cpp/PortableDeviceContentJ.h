@@ -1,15 +1,15 @@
 #pragma once
 
-#include <PortableDeviceApi.h>
 #include "PortableDeviceObjectJ.h"
+
 #include <jni.h>
+#include <PortableDeviceApi.h>
 
 static IPortableDeviceProperties* ppProperties;
 
 class PortableDeviceContentJ
 {
 	public:
-		PortableDeviceContentJ();
 		PortableDeviceContentJ(IPortableDeviceContent*, LPWSTR deviceID);
 		IPortableDeviceContent* getContent();
 		

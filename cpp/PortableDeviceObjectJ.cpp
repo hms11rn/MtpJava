@@ -2,6 +2,8 @@
 #include "PortableDeviceObjectJ.h"
 #include "PortableDevice.h"
 #include "PortableDeviceContentJ.h"
+#include "mtp.h"
+
 #include <iostream>
 #include <PortableDevice.h>
 
@@ -44,7 +46,7 @@ jobject keyAndValues(JNIEnv* env, LPWSTR id) {
 	IPortableDeviceValues* deviceValues{};
 	 hr = p->GetValues(id, coll, &deviceValues);
 	 if (!SUCCEEDED(hr)) {
-		 cout << "hr failed at getValues: " << hr << endl;
+		 handleException("DEVICE", "Failed to get IPortableDeviceValues ", hr);
 	 }
 	jobject keyAndValuesJava = GetKeyAndValuesMap(env, coll, &deviceValues);
 	

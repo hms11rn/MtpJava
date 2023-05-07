@@ -14,7 +14,6 @@ HRESULT InitializePortableDeviceValues();
 void releasePortableDeviceValues();
 IPortableDevice* getPortableDevice();
 HRESULT InitializePortableDevice();
-void closePortableDevice();
 
 jstring getFriendlyName(JNIEnv* env, jstring deviceID);
 

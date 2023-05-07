@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#include "mtp.h"
+
 #include <iostream>
 #include "PortableDeviceManager.h"
 
@@ -11,7 +13,7 @@ IPortableDeviceManager* getDeviceManager()
 {
     HRESULT hr = InitializeDeviceManager();
     if (FAILED(hr)) {
-        cout << "Failed to initialize device manager" << endl;
+        handleException("COM", "Failed to initialize device manager", hr);
     }
     return pDeviceManager;
 }
@@ -28,7 +30,6 @@ HRESULT InitializeDeviceManager()
 
         if (FAILED(hr))
         {
-            
             return hr;
         }
     }
@@ -47,47 +48,47 @@ void ReleaseDeviceManager()
 
 
  int getDeviceCount() {
-   
     // obtain amount of devices
-    DWORD pnp_device_id_count = 0;
-    HRESULT hr = getDeviceManager()->GetDevices(nullptr, &pnp_device_id_count);
-
+    DWORD deviceCount = 0;
+    HRESULT hr;
+    IPortableDeviceManager* pManager;
+    pManager = getDeviceManager();
+    hr = pManager->GetDevices(nullptr, &deviceCount);
        if (FAILED(hr)) {
-            std::cout << "! Failed to get number of devices on the system, hr = " << std::hex << hr << std::endl;
+            handleException("DEVICE_MGR", "Failed to get the number of devices on the system", hr);
             return 0;
-       }
-    
-
+       } 
     // Uninitialize
-    return pnp_device_id_count;
+    return deviceCount;
 }
 
  jobjectArray getDeviceHWID(JNIEnv *env) {     
      jobjectArray deviceNames;
      DWORD size;
+     HRESULT hr;
 
-     HRESULT hr = getDeviceManager()->GetDevices(nullptr, &size);
+     hr = getDeviceManager()->GetDevices(nullptr, &size);
      if (FAILED(hr)) {
-         std::cout << "hr2 failed, hr = " << std::hex << hr << std::endl;
+         handleException("DEVICE_MGR", "Failed to get the number of devices on the system", hr);
          return nullptr;
      }
-     LPWSTR* deviceIDs = new LPWSTR[size];
-     hr = getDeviceManager()->GetDevices(deviceIDs, &size);
+     LPWSTR* wszDeviceIDs = new LPWSTR[size];
+     hr = getDeviceManager()->GetDevices(wszDeviceIDs, &size);
      if (FAILED(hr)) {
-         std::cout << "hr2 failed, hr = " << std::hex << hr << std::endl;
+         handleException("DEVICE_MGR", "Failed to get the device IDs" , hr);
          return nullptr;
      }
 
      if (SUCCEEDED(hr)) {
          deviceNames = env->NewObjectArray(size, env->FindClass("java/lang/String"), NULL);
          for (DWORD i = 0; i < size; i++) {
-              env->SetObjectArrayElement(deviceNames, i, env->NewString((jchar*)deviceIDs[i], wcslen(deviceIDs[i])));
-              CoTaskMemFree(deviceIDs[i]);
+              env->SetObjectArrayElement(deviceNames, i, env->NewString((jchar*)wszDeviceIDs[i], wcslen(wszDeviceIDs[i])));
+              CoTaskMemFree(wszDeviceIDs[i]);
          }
-         delete[] deviceIDs;
+         delete[] wszDeviceIDs;
          return deviceNames;
      }
-
+   
      return nullptr;
  }
  JNIEXPORT jint JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceManagerWin32_getDeviceCount

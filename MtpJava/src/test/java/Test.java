@@ -1,11 +1,7 @@
-import com.github.hms11rn.mtp.DeviceProperties;
-import com.github.hms11rn.mtp.Mtp;
-import com.github.hms11rn.mtp.PortableDevice;
-import com.github.hms11rn.mtp.PortableDeviceManager;
+import com.github.hms11rn.mtp.*;
 import com.github.hms11rn.mtp.content.PortableDeviceContainerObject;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -13,15 +9,22 @@ import java.util.Map;
 public class Test {
 
     @org.junit.jupiter.api.Test
-    static void test() throws IOException {
+    static void test() {
+
         Mtp.register();
-        PortableDeviceManager mgr = PortableDeviceManager.getDeviceManager();
-        PortableDevice pd = mgr.getDevices()[0];
+        try {
+            PortableDeviceManager mgr = PortableDeviceManager.getDeviceManager();
+        } catch (ComException e) {
+            System.out.println("Error");
+        }
+        if (true)
+            return;
+        PortableDevice pd = null;
         System.out.println("Friendly name: " + pd.getFriendlyName());
         System.out.println("Manufacture: " + pd.getManufacture());
         System.out.println("Description: " + pd.getDescription());
         pd.open();
-
+        System.out.println("Opened");
         Map<String, DeviceProperties.PropertyValue> m = pd.getProperties();
         for (int i = 0; i < m.size(); i++) {
             System.out.print(new ArrayList(m.keySet()).get(i) + " :: ");
@@ -48,24 +51,35 @@ public class Test {
             System.out.println(new ArrayList<>(m1.values()).get(i));
         }
         System.out.println("\r\n\r\n\r\n\r\n\r\n" + j.getName());
-       // j.addFileObject(new File("C:\\Users\\hmsel\\Documents\\randomText2.txt"));
-      //  j.addFileObject(new File("C:\\Users\\hmsel\\Documents\\randomText3.txt"));
+    //   j.addFileObject(new File("C:\\Users\\hmsel\\Documents\\randomText2.txt"));
+        //  j.addFileObject(new File("C:\\Users\\hmsel\\Documents\\randomText3.txt"));
         for (PortableDeviceObject j1 :  j.getChildObjects()) {
             if (j1.getName().equals("randomText2.txt")) {
-               System.out.println(j1.delete());
-       //         InputStream t = j1.getInputStream();
-       //         BufferedReader r = new BufferedReader(new InputStreamReader(t));
-       //         System.out.println(r.readLine());
+                j1.rename("randomText3.txt");
+                //         InputStream t = j1.getInputStream();
+                //         BufferedReader r = new BufferedReader(new InputStreamReader(t));
+                //         System.out.println(r.readLine());
+                j1.rename("randomText4.txt");
 
             }
         }
+
+        pd.close();
+        System.out.println("Closed");
+        pd.open();
+        System.out.println("Opened");
+
     //    System.out.println(j.getName());
         //    System.out.println(j.getDateModified());
    //     j.copy("C:\\Users\\hmsel\\Documents\\aaaatest");
   //      j.createFolderObject("newFolder");
         pd.close();
     }
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
+        System.out.println("Pre started");
         test();
     }
+    /*
+     * to replicate bug, disconnect cable, reconnect and run the program twice TODO
+     */
 }

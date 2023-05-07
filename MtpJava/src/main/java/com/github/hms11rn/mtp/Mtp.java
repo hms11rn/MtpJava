@@ -3,12 +3,12 @@ package com.github.hms11rn.mtp;
 public class Mtp {
 
     /**
-     * Test method for jni
+     * Register natives, in the future this will be done automatically
      */
-    public static native String[] getMtpNames();
-
     public static void register() {
         System.loadLibrary("mtpjava");
+        registerJNI();
 
     }
+    public static native void registerJNI();
 }

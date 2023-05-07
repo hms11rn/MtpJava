@@ -27,13 +27,19 @@ public class PortableDeviceContainerObjectWin32 extends PortableDeviceObjectWin3
     }
 
     @Override
+    public PortableDeviceObject addFileObject(InputStream is) {
+        // TODO implement adding file using an input stream
+        return null;
+    }
+
+    @Override
     public PortableDeviceFolderObject createFolderObject(String name) {
         return new PortableDeviceFolderObjectWin32(content.createFolder(name, id), content);
     }
 
     @Override
-    public boolean delete() {
-        return content.delete(id, 1);
+    public void delete() {
+        content.delete(id, 1);
     }
 
     @Override

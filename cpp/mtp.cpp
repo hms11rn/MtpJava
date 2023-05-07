@@ -1,28 +1,45 @@
 #include "pch.h"
+
 #include "mtp.h"
+
 #include <string>
 #include <iostream>
 #include "PortableDeviceManager.h"
-
+#include <sstream>
 using namespace std;
 
 
-// Implementation of the native method getMtpNames()
-JNIEXPORT jobjectArray JNICALL Java_com_github_hms11rn_mtp_Mtp_getMtpNames
-(JNIEnv* env, jclass cls) {
-	int device_count = getDeviceCount();
-	jobjectArray strarr = env->NewObjectArray(device_count, env->FindClass("java/lang/String"), nullptr);
-	for (int i = 0; i < device_count; ++i)
-	{
-		env->SetObjectArrayElement(strarr, i, env->NewStringUTF("test22"));
-	}
+JNIEnv* env;
 
-	return strarr;
+JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_Mtp_registerJNI
+(JNIEnv* envv) {
+	env = envv;
 }
 
-void handleException(char* name)
+
+/*
+TYPES: DEVICE_MGR - Device Manager
+	   DEVICE - Portable Device
+	   COM - Com Exception
+*/
+void handleException(const char* type, const char* msg, HRESULT hr)
 {
-	cout << "Exception was thrown: " << name << endl;
+	ostringstream oss;
+	oss << msg << " (HRESULT: 0x" << std::hex << hr << ")";
+
+	if (type == "DEVICE_MGR") {
+		jclass generalPortableDeviceException = env->FindClass("com/github/hms11rn/mtp/PortableDeviceException");
+		env->ThrowNew(generalPortableDeviceException, oss.str().c_str());
+	}
+	else if (type == "DEVICE") {
+		jclass generalPortableDeviceException = env->FindClass("com/github/hms11rn/mtp/PortableDeviceException");
+		env->ThrowNew(generalPortableDeviceException, oss.str().c_str());
+	}
+	else if (type == "COM") {
+		jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/ComException");
+		jthrowable ex = (jthrowable)env->NewObject(deviceClosedException, env->GetMethodID(deviceClosedException, "<init>", "(Ljava/lang/String;)V"), env->NewStringUTF(oss.str().c_str()));
+		env->Throw(ex);
+	}
 }
 
 jobject ConvertUnsignedLongLongToJava(JNIEnv* env, ULONGLONG number)

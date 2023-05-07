@@ -1,6 +1,5 @@
-#include <initguid.h> 
-
 #include "pch.h"
+#include "mtp.h"
 #include "PortableDeviceContentJ.h"
 #include "PortableDevice.h"
 
@@ -9,7 +8,6 @@
 #include <jni.h>
 #include <iostream>
 #include <atlbase.h>
-#include <atlstr.h>
 
 // 
 
@@ -35,7 +33,7 @@ IPortableDeviceValues* getCollection() {
 	if (pCollection == nullptr) {
 		HRESULT hr = CoCreateInstance(CLSID_PortableDeviceValues, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pCollection));
 		if (FAILED(hr)) {
-			// handle error
+			handleException("COM", "Failed to create IPortableDeviceValues", hr);
 		}
 	}
 	pCollection->Clear();
@@ -49,8 +47,7 @@ PortableDeviceContentJ::PortableDeviceContentJ(IPortableDeviceContent* content, 
 		pContent = content;
 		HRESULT hr = content->Properties(&ppProperties);
 		if (FAILED(hr)) {
-			cout << "incorrect hr" << endl;
-			// handle error
+			handleException("DEVICE", "Failed to get object properties", hr);
 		}
 	}
 }
@@ -80,7 +77,7 @@ BOOL PortableDeviceContentJ::deleteFile(LPWSTR idd, int recursion)
 	coll->Add(&del);
 	pContent->Delete(recursion, coll, &result);
 	PROPVARIANT resultPropVariant;
-	result->GetAt(0, &resultPropVariant); // Result shoul only have a single item in it;
+	result->GetAt(0, &resultPropVariant); // Result should only have a single item in it;
 	SCODE resultSCODE = resultPropVariant.scode;
 	return resultSCODE == S_OK;
 }
@@ -226,7 +223,6 @@ void PortableDeviceContentJ::copyFile(JNIEnv* env, LPWSTR id, LPWSTR outDir) {
 	DWORD cbTotalBytesWritten = 0;
 	hr = StreamCopy(pFileStream, pObjectStream, optimalBufferSize, &cbTotalBytesWritten);
 	if (FAILED(hr)) {
-		cout << "Failed to copy stream" << endl;
 		//handle error
 		return;
 	}
@@ -248,13 +244,9 @@ void PortableDeviceContentJ::updateProperty(JNIEnv* env, LPWSTR id, GUID categor
 	pValues = getCollection();
 	pValues->SetStringValue(prop, value);
 	pContent->Properties(&pProperties);
-
 	pProperties->SetValues(id, pValues, &outValues);
+	pProperties->Release(); 
 		
-}
-// ?????
-PortableDeviceContentJ::PortableDeviceContentJ()
-{
 }
 
 jbyteArray PortableDeviceContentJ::getBytes(JNIEnv* env, LPWSTR id) {
