@@ -2,6 +2,10 @@ import com.github.hms11rn.mtp.*;
 import com.github.hms11rn.mtp.content.PortableDeviceContainerObject;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -9,17 +13,9 @@ import java.util.Map;
 public class Test {
 
     @org.junit.jupiter.api.Test
-    static void test() {
-
-        Mtp.register();
-        try {
-            PortableDeviceManager mgr = PortableDeviceManager.getDeviceManager();
-        } catch (ComException e) {
-            System.out.println("Error");
-        }
-        if (true)
-            return;
-        PortableDevice pd = null;
+    static void test() throws IOException {
+        PortableDeviceManager mgr = PortableDeviceManager.getDeviceManager();
+        PortableDevice pd = mgr.getDevices()[0];
         System.out.println("Friendly name: " + pd.getFriendlyName());
         System.out.println("Manufacture: " + pd.getManufacture());
         System.out.println("Description: " + pd.getDescription());
@@ -41,7 +37,8 @@ public class Test {
         System.out.println(pd.getSyncPartner());
 
         pd.reloadProperties();
-
+        pd.close();
+        pd.open();
         PortableDeviceContainerObject obj = (PortableDeviceContainerObject) pd.getRootObjects()[0];
         PortableDeviceContainerObject j = (PortableDeviceContainerObject) obj.getChildObjects()[0];
         System.out.println(j.getName());
@@ -51,15 +48,15 @@ public class Test {
             System.out.println(new ArrayList<>(m1.values()).get(i));
         }
         System.out.println("\r\n\r\n\r\n\r\n\r\n" + j.getName());
-    //   j.addFileObject(new File("C:\\Users\\hmsel\\Documents\\randomText2.txt"));
+        //  j.addFileObject(new File("C:\\Users\\hmsel\\Documents\\randomText2.txt"));
         //  j.addFileObject(new File("C:\\Users\\hmsel\\Documents\\randomText3.txt"));
         for (PortableDeviceObject j1 :  j.getChildObjects()) {
             if (j1.getName().equals("randomText2.txt")) {
-                j1.rename("randomText3.txt");
                 //         InputStream t = j1.getInputStream();
                 //         BufferedReader r = new BufferedReader(new InputStreamReader(t));
                 //         System.out.println(r.readLine());
-                j1.rename("randomText4.txt");
+                InputStream is = j1.getInputStream();
+          //      j.addFileObject(is, "hello.txt");
 
             }
         }
@@ -75,8 +72,7 @@ public class Test {
   //      j.createFolderObject("newFolder");
         pd.close();
     }
-    public static void main(String[] args) {
-        System.out.println("Pre started");
+    public static void main(String[] args) throws IOException {
         test();
     }
     /*

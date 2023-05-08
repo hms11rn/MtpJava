@@ -121,6 +121,7 @@ class PortableDeviceWin32 implements PortableDevice {
     @Override
     public void open() {
         openN();
+        reloadProperties();
         isOpen = true;
     }
 

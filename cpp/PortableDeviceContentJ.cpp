@@ -77,7 +77,7 @@ BOOL PortableDeviceContentJ::deleteFile(LPWSTR idd, int recursion)
 	coll->Add(&del);
 	pContent->Delete(recursion, coll, &result);
 	PROPVARIANT resultPropVariant;
-	result->GetAt(0, &resultPropVariant); // Result should only have a single item in it;
+	result->GetAt(0, &resultPropVariant);
 	SCODE resultSCODE = resultPropVariant.scode;
 	return resultSCODE == S_OK;
 }
@@ -205,18 +205,13 @@ jstring PortableDeviceContentJ::addFileFromInputStream(JNIEnv* env, LPWSTR paren
 	jstring jObjectID; 
 	jclass clsInputStream;
 	jmethodID jStreamRead;
-	jmethodID jStreamAvailable; // In General its not recommended to use available()I
 	jbyteArray bytesFromIS;
 	jbyte* bytes;
 	jint bufferSize = 4096;
 	
-
-	clsInputStream = env->FindClass("java/io/InputStream");
 	bytesFromIS = env->NewByteArray(bufferSize);
-	
+	clsInputStream = env->FindClass("java/io/InputStream");
 	jStreamRead = env->GetMethodID(clsInputStream, "read", "([B)I");
-	jStreamAvailable = env->GetMethodID(clsInputStream, "available", "()I");
-
 
 	// Copy Stream
 	dwSize = env->CallIntMethod(inputStream, jStreamRead, bytesFromIS);
