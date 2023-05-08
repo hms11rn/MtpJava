@@ -225,26 +225,37 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     wszDeviceID = (WCHAR*)env->GetStringChars(deviceID, nullptr);
     pDevice = getPortableDevice();
 
-    hr = pDevice->Content(&pContent);
-    if (FAILED(hr))
-    {
-        if (hr == E_WPD_DEVICE_NOT_OPEN || hr == E_POINTER) {
-            jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/DeviceClosedException");
-            string devIdChar = env->GetStringUTFChars(getFriendlyName(env, deviceID), nullptr);
-            env->ThrowNew(deviceClosedException, devIdChar.append(" is not opened. use PortableDevice#open() to open").c_str());
+    
+    if (content == nullptr) {
+        hr = pDevice->Content(&pContent);
+        if (FAILED(hr)) {
+            if (hr == E_WPD_DEVICE_NOT_OPEN || hr == E_POINTER) {
+                jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/DeviceClosedException");
+                string devIdChar = env->GetStringUTFChars(getFriendlyName(env, deviceID), nullptr);
+                env->ThrowNew(deviceClosedException, devIdChar.append(" is not opened. use PortableDevice#open() to open").c_str());
+            }
+            return nullptr;
         }
-        // Handle error
-        return nullptr;
+        PortableDeviceContentJ* content = new PortableDeviceContentJ(pContent, wszDeviceID);
     }
+    pContent = content->getContent();
 
-    PortableDeviceContentJ* content = new PortableDeviceContentJ(pContent, wszDeviceID);
-
+    if (pProperties != nullptr) {
+        pProperties->Release();
+    }
     pProperties = nullptr;
+  
     hr = pContent->Properties(&pProperties);
-    if (FAILED(hr))
-    {
+    if (FAILED(hr)) {
+        if (FAILED(hr)) {
+            if (hr == E_WPD_DEVICE_NOT_OPEN || hr == E_POINTER) {
+                jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/DeviceClosedException");
+                string devIdChar = env->GetStringUTFChars(getFriendlyName(env, deviceID), nullptr);
+                env->ThrowNew(deviceClosedException, devIdChar.append(" is not opened. use PortableDevice#open() to open").c_str());
+            }
+            return nullptr;
+        }
         cout << "Failed to get device properties, hr = " << std::hex << hr << endl;
-        // Handle error
         return nullptr;
     }
 
@@ -260,11 +271,13 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
         pProperties->Release();
         return nullptr;
     }
-    jobject map = GetKeyAndValuesMap(env, deviceKeys, &deviceValues);
+    jobject map = GetKeyAndValuesMap(env, deviceKeys, deviceValues);
+    deviceKeys->Release();
+    deviceValues->Release();
     return map;
 }
 
-jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPortableDeviceValues** values) {
+jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPortableDeviceValues* values) {
     jclass mapClass = env->FindClass("java/util/HashMap");
     if (mapClass == nullptr) 
         return nullptr;
@@ -296,12 +309,12 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
         s.clear(); // s is no longer need as java key was created
 
         PROPVARIANT valueAt; // value of key
-        hr = (*values)->GetValue(keyName, &valueAt);
+        hr = values->GetValue(keyName, &valueAt);
         VARTYPE valueType = valueAt.vt;
         switch (valueType) {
         case VT_LPWSTR: {
             LPWSTR valueAtStr = nullptr;
-            (*values)->GetStringValue(keyName, &valueAtStr);
+            values->GetStringValue(keyName, &valueAtStr);
             jstring singleValueJava = env->NewString((jchar*)valueAtStr, wcslen(valueAtStr));
             // free memory
             CoTaskMemFree(valueAtStr);
@@ -312,7 +325,7 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
         }
         case VT_BOOL: {
             BOOL valueAtBool;
-            (*values)->GetBoolValue(keyName, &valueAtBool);
+            values->GetBoolValue(keyName, &valueAtBool);
             jclass boolClass = env->FindClass("java/lang/Boolean");
             jmethodID initBool = env->GetMethodID(boolClass, "<init>", "(Z)V");
             jobject boolObject = env->NewObject(boolClass, initBool, valueAtBool);
@@ -324,7 +337,7 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
         }
         case VT_UI4: {
             ULONG valueAtInt;
-            (*values)->GetUnsignedIntegerValue(keyName, &valueAtInt);
+            values->GetUnsignedIntegerValue(keyName, &valueAtInt);
             jclass intClass = env->FindClass("java/lang/Integer");
             jmethodID initInt = env->GetMethodID(intClass, "<init>", "(I)V");
             jobject intObject = env->NewObject(intClass, initInt, valueAtInt);
@@ -336,7 +349,7 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
         }
         case VT_UI8: {
             ULONGLONG valueAtInt;
-            (*values)->GetUnsignedLargeIntegerValue(keyName, &valueAtInt);
+            values->GetUnsignedLargeIntegerValue(keyName, &valueAtInt);
             jobject longJava = ConvertUnsignedLongLongToJava(env, valueAtInt);
             env->CallObjectMethod(hashMap, put, keyJava, longJava);
             // free memory
@@ -346,7 +359,7 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
         }
         case VT_CLSID: {
             LPWSTR valueAtCLSID = nullptr;
-            (*values)->GetStringValue(keyName, &valueAtCLSID);
+            values->GetStringValue(keyName, &valueAtCLSID);
             jstring singleValueJavaCLSID = env->NewString((jchar*)valueAtCLSID, wcslen(valueAtCLSID));
             // free memory
             CoTaskMemFree(valueAtCLSID);
@@ -357,7 +370,7 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
         }
         case VT_DATE: {
             LPWSTR valueAtDate;
-            (*values)->GetStringValue(keyName, &valueAtDate);
+            values->GetStringValue(keyName, &valueAtDate);
             jstring singleValueJava = env->NewString((jchar*)valueAtDate, wcslen(valueAtDate));
             // free memory
             CoTaskMemFree(valueAtDate);
@@ -365,34 +378,7 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
             env->DeleteLocalRef(singleValueJava);
             env->DeleteLocalRef(keyJava);
             break;
-        }
-        
-        case VT_ARRAY: { // TODO I don't know if this works       
-            LPSAFEARRAY* arr = valueAt.pparray;
-            SAFEARRAY* psa = reinterpret_cast<SAFEARRAY*>(arr);
-            // Get a pointer to the array data
-            long lowerBound, upperBound, count;
-            SafeArrayGetLBound(psa, 1, &lowerBound);
-            SafeArrayGetUBound(psa, 1, &upperBound);
-            count = upperBound - lowerBound + 1;
-
-            jobjectArray valueJavaArr = env->NewObjectArray(count, env->FindClass("java/lang/String"), nullptr);
-            for (int i1 = 0; i1 < count; i1++) {
-                LONG l = i1;
-                LPWSTR valueAtt;
-                SafeArrayGetElement(psa, &l, &valueAtt);
-                if (SUCCEEDED(hr)) {
-                    jstring singleValueJavaArr = env->NewString((jchar*)valueAtt, wcslen(valueAtt));
-                    env->SetObjectArrayElement(valueJavaArr, i1, singleValueJavaArr);
-                    env->DeleteLocalRef(singleValueJavaArr);
-                    CoTaskMemFree(valueAtt);
-                }
             }
-            env->CallObjectMethod(hashMap, put, keyJava, valueJavaArr);
-            env->DeleteLocalRef(keyJava);
-            env->DeleteLocalRef(valueJavaArr);
-            break;
-        }                  
        }
       
     }
@@ -424,7 +410,6 @@ HRESULT OpenDevice(LPCWSTR wszPnPDeviceID, IPortableDevice** ppDevice, LPCWSTR c
         if (FAILED(ClientInfoHR))
         {
             cout << "Failed to set WPD_CLIENT_NAME" << endl;
-            // Failed to set WPD_CLIENT_NAME
         }
 
         ClientInfoHR = pClientInformation->SetUnsignedIntegerValue(WPD_CLIENT_MAJOR_VERSION, majorV);
@@ -504,13 +489,13 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_clo
 (JNIEnv* env, jobject obj) {
     IPortableDevice* pDevice;
     LPWSTR wszDeviceID;
-    jfieldID fid;
+    jfieldID deviceIdField;
     jstring jsDeviceID;
 
     pDevice = getPortableDevice();
-    fid = env->GetFieldID(env->GetObjectClass(obj), "deviceID", "Ljava/lang/String;");
-    jsDeviceID = (jstring)env->GetObjectField(obj, fid);
-    wszDeviceID = (WCHAR*)env->GetStringChars(jsDeviceID, NULL);
+    deviceIdField = env->GetFieldID(env->GetObjectClass(obj), "deviceID", "Ljava/lang/String;");
+    jsDeviceID = (jstring)env->GetObjectField(obj, deviceIdField);
+    wszDeviceID = (WCHAR*)env->GetStringChars(jsDeviceID, nullptr);
     pDevice->Close();
     pDevice->Release();
     pDevice = nullptr;
@@ -527,11 +512,12 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_clo
         contentTypeKey = nullptr;
     }
     if (content != nullptr) {
-        content->getContent()->Release();
+        content->release();
         delete content;
         content = nullptr;
     }
     isOpen = false;
+    env->ReleaseStringChars(jsDeviceID, (jchar*)wszDeviceID);
 }
 
 JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getObjectsN
@@ -552,16 +538,12 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     jobject hashMap = env->NewObject(mapClass, init);
     jmethodID put = env->GetMethodID(mapClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
 
-    // initalize device id
+    // Get device ID from java
     deviceIDField = env->GetFieldID(env->GetObjectClass(cls), "deviceID", "Ljava/lang/String;");
     jdeviceID = (jstring)env->GetObjectField(cls, deviceIDField);
     wszDeviceID = (WCHAR*)env->GetStringChars(jdeviceID, nullptr);
-
     objId = (WCHAR*)env->GetStringChars(objIdJava, nullptr);
 
- 
-    
-    // get root objects
     pContent = content->getContent();
     IEnumPortableDeviceObjectIDs* pEnum = nullptr;
      hr = pContent->EnumObjects(0, objId, nullptr, &pEnum);

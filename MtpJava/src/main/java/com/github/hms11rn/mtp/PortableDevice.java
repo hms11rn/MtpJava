@@ -74,6 +74,7 @@ public interface PortableDevice {
         VIDEO,
         PERSONAL_INFORMATION_MANAGER,
         AUDIO_RECORDER
+
     }
 
 }

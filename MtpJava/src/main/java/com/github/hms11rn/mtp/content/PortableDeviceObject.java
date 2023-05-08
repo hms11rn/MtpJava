@@ -7,6 +7,12 @@ import java.math.BigInteger;
 import java.util.Date;
 import java.util.Map;
 
+/**
+ * Basic Portable Device Object, This Object is similar to a file - It contains data,
+ * but instead of being identified by its name, it's identified by a unique ID.
+ *<br>
+ * Folder Or Storage Objects can be found in {@link PortableDeviceContainerObject}
+ */
 @SuppressWarnings("unused")
 public interface PortableDeviceObject {
 
@@ -96,8 +102,8 @@ public interface PortableDeviceObject {
       void copy(String path);
       void rename(String newName);
       /**
-       * Get input stream of the content in device
-       * @return
+       * Get input stream of Object
+       * @return Input Stream with object data
        */
       InputStream getInputStream();
  }

@@ -20,7 +20,7 @@ jstring getFriendlyName(JNIEnv* env, jstring deviceID);
 
 
 HRESULT OpenDevice(LPCWSTR wszPnPDeviceID, IPortableDevice** ppDevice, LPCWSTR, int, int, int);
-jobject GetKeyAndValuesMap(JNIEnv*, IPortableDeviceKeyCollection*, IPortableDeviceValues**);
+jobject GetKeyAndValuesMap(JNIEnv*, IPortableDeviceKeyCollection*, IPortableDeviceValues*);
 
 /* Header for class com_github_hms11rn_mtp_win32_PortableDeviceWin32 */
 

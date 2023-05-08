@@ -9,14 +9,23 @@
 #include <iostream>
 #include <atlbase.h>
 
-// 
-
 using namespace std;
 
 IPortableDeviceContent* pContent;
 IPortableDeviceValues* pCollection;
 IPortableDevicePropVariantCollection* propColl;
 
+void PortableDeviceContentJ::release() {
+	if (pContent != nullptr) {
+		pContent->Release();
+	}
+	if (pCollection != nullptr) {
+		pCollection->Release();
+	}
+	if (propColl != nullptr) {
+		propColl->Release();
+	}
+}
 
 IPortableDevicePropVariantCollection* PortableDeviceContentJ::getPropCollection() {
 	if (propColl == nullptr) {
@@ -28,6 +37,7 @@ IPortableDevicePropVariantCollection* PortableDeviceContentJ::getPropCollection(
 }
 
 HRESULT StreamCopy(IStream* pDestStream, IStream* pSourceStream, DWORD cbTransferSize, DWORD* pcbWritten);
+
 
 IPortableDeviceValues* getCollection() {
 	if (pCollection == nullptr) {

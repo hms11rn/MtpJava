@@ -5,10 +5,6 @@ import com.github.hms11rn.mtp.PortableDeviceManager;
 
 class PortableDeviceManagerWin32 implements PortableDeviceManager {
 
-    PortableDeviceManagerWin32() {
-        getDeviceCount(); // register JNIEnv*
-    }
-
     @Override
     public PortableDevice[] getDevices() {
         String[] iDs = getDeviceID();

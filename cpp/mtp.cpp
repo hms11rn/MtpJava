@@ -8,12 +8,21 @@
 #include <sstream>
 using namespace std;
 
+JavaVM* jvm = nullptr;
 
-JNIEnv* env;
+JNIEnv* getEnv();
+
+JNIEnv* getEnv() {
+	JNIEnv* env;
+	JavaVMAttachArgs args;
+	jvm->AttachCurrentThread((void**)&env, &args);
+	return env;
+}
 
 JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_Mtp_registerJNI
 (JNIEnv* envv) {
-	env = envv;
+	
+	envv->GetJavaVM(&jvm);
 }
 
 
@@ -24,6 +33,7 @@ TYPES: DEVICE_MGR - Device Manager
 */
 void handleException(const char* type, const char* msg, HRESULT hr)
 {
+	JNIEnv* env = getEnv();
 	ostringstream oss;
 	oss << msg << " (HRESULT: 0x" << std::hex << hr << ")";
 
@@ -37,8 +47,7 @@ void handleException(const char* type, const char* msg, HRESULT hr)
 	}
 	else if (type == "COM") {
 		jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/ComException");
-		jthrowable ex = (jthrowable)env->NewObject(deviceClosedException, env->GetMethodID(deviceClosedException, "<init>", "(Ljava/lang/String;)V"), env->NewStringUTF(oss.str().c_str()));
-		env->Throw(ex);
+		env->NewObject(deviceClosedException, env->GetMethodID(deviceClosedException, "<init>", "(Ljava/lang/String;)V"), env->NewStringUTF(oss.str().c_str()));
 	}
 }
 

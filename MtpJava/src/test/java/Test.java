@@ -37,6 +37,7 @@ public class Test {
         System.out.println(pd.getSyncPartner());
 
         pd.reloadProperties();
+        System.out.println(pd.getPowerSource());
         pd.close();
         pd.open();
         PortableDeviceContainerObject obj = (PortableDeviceContainerObject) pd.getRootObjects()[0];
@@ -60,7 +61,15 @@ public class Test {
 
             }
         }
-
+        for (PortableDeviceObject e : j.getChildObjects()) {
+            if (e.getName().equals("name")) {
+                System.out.println("Found name object");
+                if (e.isContainer())
+                    System.out.println(e.getName() + " is a container object");
+                PortableDeviceContainerObject e1 = (PortableDeviceContainerObject) e;
+                e.copy("C:\\Users\\Test\\FolderToCopy"); // this is going to copy recursively
+            }
+        }
         pd.close();
         System.out.println("Closed");
         pd.open();
@@ -75,6 +84,7 @@ public class Test {
     public static void main(String[] args) throws IOException {
         test();
     }
+
     /*
      * to replicate bug, disconnect cable, reconnect and run the program twice TODO
      */

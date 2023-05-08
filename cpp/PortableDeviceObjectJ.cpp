@@ -48,8 +48,9 @@ jobject keyAndValues(JNIEnv* env, LPWSTR id) {
 	 if (!SUCCEEDED(hr)) {
 		 handleException("DEVICE", "Failed to get IPortableDeviceValues ", hr);
 	 }
-	jobject keyAndValuesJava = GetKeyAndValuesMap(env, coll, &deviceValues);
-	
+	jobject keyAndValuesJava = GetKeyAndValuesMap(env, coll, deviceValues);
+	coll->Release();
+	deviceValues->Release();
 	return keyAndValuesJava;
 }
 

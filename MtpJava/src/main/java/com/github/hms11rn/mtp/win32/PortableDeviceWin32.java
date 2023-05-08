@@ -158,10 +158,10 @@ class PortableDeviceWin32 implements PortableDevice {
     // TODO figure out why Im using string value instead of int and fix (forgot)
     @Override
     public PowerSource getPowerSource() {
-        String powerSource = properties.get(PropertiesWin32.WPD_DEVICE_POWER_SOURCE.toString()).getStringValue();
-        if (powerSource.equals("0"))
+        int powerSource = properties.get(PropertiesWin32.WPD_DEVICE_POWER_SOURCE.toString()).getValue(0);
+        if (powerSource == 0)
             return PowerSource.BATTERY;
-        if (powerSource.equals("1"))
+        if (powerSource == 1)
             return PowerSource.EXTERNAL;
         else
             return PowerSource.UNKNOWN;

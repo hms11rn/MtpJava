@@ -1,5 +1,7 @@
 package com.github.hms11rn.mtp.win32;
 
+import com.github.hms11rn.mtp.Mtp;
+
 public class MtpWin32 {
 
     private static boolean flag = false;
@@ -8,6 +10,7 @@ public class MtpWin32 {
             System.loadLibrary("mtpjava");
             flag = true;
         }
+        Mtp.registerJNI();
         return new PortableDeviceManagerWin32();
     }
 

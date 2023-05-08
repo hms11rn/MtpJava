@@ -4,6 +4,10 @@ import com.github.hms11rn.mtp.win32.MtpWin32;
 
 import java.math.BigInteger;
 
+/**
+ * A device property is a unique UUID for a property, these UUIDs are the way
+ * the Computer connects to the Portable Device
+ */
 public class DeviceProperties {
 
     public static String MANUFACTURE;
@@ -42,7 +46,7 @@ public class DeviceProperties {
     }
     @SuppressWarnings({"unused", "unchecked"})
     public static class PropertyValue {
-        private Object value;
+        private final Object value;
         private final String key;
         private final Class<?> type;
         public PropertyValue(Class<?> type, String key,  Object value) {

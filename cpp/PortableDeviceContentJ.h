@@ -10,6 +10,7 @@ static IPortableDeviceProperties* ppProperties;
 class PortableDeviceContentJ
 {
 	public:
+		void release();
 		PortableDeviceContentJ(IPortableDeviceContent*, LPWSTR deviceID);
 		IPortableDeviceContent* getContent();
 		

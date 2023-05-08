@@ -9,12 +9,16 @@ using namespace std;
 
 IPortableDeviceManager* pDeviceManager = nullptr;
 
+HRESULT cHr = S_OK;
 IPortableDeviceManager* getDeviceManager()
 {
     HRESULT hr = InitializeDeviceManager();
     if (FAILED(hr)) {
         handleException("COM", "Failed to initialize device manager", hr);
+        cHr = hr;
     }
+    else
+        cHr = S_OK;
     return pDeviceManager;
 }
 
@@ -45,14 +49,19 @@ void ReleaseDeviceManager()
     }
 }
 
-
-
  int getDeviceCount() {
     // obtain amount of devices
     DWORD deviceCount = 0;
     HRESULT hr;
     IPortableDeviceManager* pManager;
+
+
     pManager = getDeviceManager();
+
+    if (FAILED(cHr)) {
+        handleException("COM", "Failed to initialize device manager", cHr);
+        return 0;
+    }
     hr = pManager->GetDevices(nullptr, &deviceCount);
        if (FAILED(hr)) {
             handleException("DEVICE_MGR", "Failed to get the number of devices on the system", hr);
@@ -66,8 +75,14 @@ void ReleaseDeviceManager()
      jobjectArray deviceNames;
      DWORD size;
      HRESULT hr;
+     IPortableDeviceManager* pManager;
 
-     hr = getDeviceManager()->GetDevices(nullptr, &size);
+     pManager = getDeviceManager();
+     if (FAILED(cHr)) {
+         handleException("COM", "Failed to initialize device manager", cHr);
+         return nullptr;
+     }
+     hr = pManager->GetDevices(nullptr, &size);
      if (FAILED(hr)) {
          handleException("DEVICE_MGR", "Failed to get the number of devices on the system", hr);
          return nullptr;
