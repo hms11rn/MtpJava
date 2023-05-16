@@ -56,8 +56,8 @@ class Test {
 ```
 
 ### Credits
-I would like to thank the creator of the [JMtp](https://code.google.com/archive/p/jmtp/) Library for providing me with a basic understanding of how to connect WPD to Java using JNI.
-ultimately  the reason why I decided to create my own library is because JMtp is somewhat outdated and does not have all of the features I require for an upcoming project.
+[JMtp](https://code.google.com/archive/p/jmtp/) Library, basic understanding of how to connect WPD to Java using JNI.<br>
+The reason I created MtpJava is because Jmro library is outdated and lacks some features I needed for a feature project.
 
 
 
