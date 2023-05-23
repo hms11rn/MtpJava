@@ -36,10 +36,10 @@ class Test {
       String deviceDescription = device.getDescription();
       System.out.println("Name: " + deviceName);
       
-      // This is really important, to access any other method in PortableDevice class you MUST call device.open(); 
+      // To access any other method in the PortableDevice class, it is important to call device.open() 
       device.open();
       
-      String firmwareVersion = device.getFirmwareVersion();
+      String firmwareVersion = device.getFirmwareVersion(); // Example method that requires the device connection to be open
       
       // obtain root objects
       IPortableDeviceObject[] roots = device.getRootObjects();
@@ -49,15 +49,16 @@ class Test {
             PortableDeviceContainerObject cObj = (PortableDeviceContainerObject) obj;
             IPortableDeviceObject[] childs = cObj.getChildObjects(); // Get child objects
             InputStream is = childs[0].getInputStream(); // NOTE: getInputStream does not work on a container object, this line is assuming childs[0] is not a PortableDeviceContainerObject
-            // There are many more methods in PortableDeivceObject, you can take a look inside the class to see all available methods 
+            // There are many more methods in PortableDeivceObject, you can take a look inside the class to see all available methods  
       }
+      device.close(); // Make sure to close the device after its no longer being used
   }
 }
 ```
 
 ### Credits
-I would like to thank the creator of the [JMtp](https://code.google.com/archive/p/jmtp/) Library for providing me with a basic understanding of how to connect WPD to Java using JNI.
-ultimately  the reason why I decided to create my own library is because JMtp is somewhat outdated and does not have all of the features I require for an upcoming project.
+[JMtp](https://code.google.com/archive/p/jmtp/) Library, basic understanding of how to connect WPD to Java using JNI.<br>
+The reason I created MtpJava is because Jmro library is outdated and lacks some features I needed for a feature project.
 
 
 
