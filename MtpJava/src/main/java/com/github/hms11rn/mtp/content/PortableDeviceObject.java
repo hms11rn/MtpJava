@@ -3,6 +3,7 @@ package com.github.hms11rn.mtp.content;
 import com.github.hms11rn.mtp.DeviceProperties;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.Map;
@@ -60,12 +61,12 @@ public interface PortableDeviceObject {
       }
 
       /**
-       * Note: not supported by all objects
+       * Not supported by all objects
        * @return Date Modified
        */
       Date getDateModified();
      /**
-      * Note: not supported by all objects
+      * Not supported by all objects
       * @return Date Created
       */
       Date getDateCreated();
@@ -106,4 +107,5 @@ public interface PortableDeviceObject {
        * @return Input Stream with object data
        */
       InputStream getInputStream();
+      OutputStream getOutputStream();
  }

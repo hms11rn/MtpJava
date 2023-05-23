@@ -8,6 +8,7 @@ import com.github.hms11rn.mtp.content.PortableDeviceObject;
 import static com.github.hms11rn.mtp.win32.PropertiesWin32.*;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -214,5 +215,11 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
     @Override
     public InputStream getInputStream() {
         return new PortableDeviceInputStreamWin32(content.getBytes(id));
+    }
+
+    // TODO outputStream
+    @Override
+    public OutputStream getOutputStream() {
+        return null;
     }
 }

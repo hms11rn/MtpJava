@@ -56,7 +56,7 @@ public interface PortableDeviceContainerObject extends PortableDeviceObject {
      PortableDeviceFolderObject createFolderObject(String name);
 
      /**
-      * @return {@code true} because this is a container object.
+      * @return {@code true} since this is a container object.
       */
      @Override
      default boolean isContainer() {

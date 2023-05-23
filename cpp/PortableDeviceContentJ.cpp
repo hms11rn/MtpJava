@@ -166,7 +166,7 @@ jstring PortableDeviceContentJ::addFile(JNIEnv* env, LPWSTR parent, jstring java
 				env->ThrowNew(generalPortableDeviceException, "Could not write to file (Does that file already exist?)");
 				return nullptr;
 			}
-			hr = pDeviceDataStream->Commit(STGC_DEFAULT);
+			hr = pDeviceDataStream->Commit(STGC_DEFAULT); // Flush data
 			if (SUCCEEDED(hr))
 			{
 				pDeviceDataStream->GetObjectID(&wszObjectID);

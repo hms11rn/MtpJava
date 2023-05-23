@@ -2,7 +2,7 @@ package com.github.hms11rn.mtp;
 
 /**
  * Com exceptions when creating Com Objects using the com interface in c++
- * If this error occurs Open an Issue on Github (This is a fatal exception)
+ * This error is caused by the ComInterface in c++ by the Com Interface
  */
 public class ComException extends RuntimeException  {
 
