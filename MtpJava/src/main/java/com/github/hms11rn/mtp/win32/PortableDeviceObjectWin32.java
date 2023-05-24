@@ -217,9 +217,19 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
         return new PortableDeviceInputStreamWin32(content.getBytes(id));
     }
 
-    // TODO outputStream
+    /**
+     * Get OutputStream of this object
+     */
     @Override
     public OutputStream getOutputStream() {
-        return null;
+        return new PortableDeviceOutputStreamWin32(id);
+    }
+
+    /**
+     * Get OutputStream of this object with initial capacity of buffer (if you want to write a known amount of bytes call this)
+     */
+    @Override
+    public OutputStream getOutputStream(int initialCapacity) {
+        return new PortableDeviceOutputStreamWin32(initialCapacity, id);
     }
 }

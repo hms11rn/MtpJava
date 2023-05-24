@@ -108,4 +108,6 @@ public interface PortableDeviceObject {
        */
       InputStream getInputStream();
       OutputStream getOutputStream();
- }
+
+ OutputStream getOutputStream(int initialCapacity);
+}

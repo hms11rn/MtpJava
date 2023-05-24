@@ -3,6 +3,7 @@ package com.github.hms11rn.mtp.content;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
 
@@ -61,5 +62,15 @@ public interface PortableDeviceContainerObject extends PortableDeviceObject {
      @Override
      default boolean isContainer() {
           return true;
+     }
+
+     @Override
+     default OutputStream getOutputStream() {
+          throw new RuntimeException(new IllegalAccessError("Container Objects do not support getOutputStream"));
+     }
+
+     @Override
+     default OutputStream getOutputStream(int initialCapacity) {
+          throw new RuntimeException(new IllegalAccessError("Container Objects do not support getOutputStream"));
      }
 }
