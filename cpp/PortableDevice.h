@@ -12,6 +12,7 @@ IPortableDevicePropVariantCollection* getPropVariantCollection();
 IPortableDeviceValues* getPortableDeviceValues();
 HRESULT InitializePortableDeviceValues();
 void releasePortableDeviceValues();
+
 IPortableDevice* getPortableDevice();
 HRESULT InitializePortableDevice();
 
@@ -43,9 +44,6 @@ extern "C" {
 	JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getDescription
 	(JNIEnv*, jclass, jstring);
 
-	JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getProperties
-	(JNIEnv*, jclass, jstring);
-
 	/*
 	* Class:     com_github_hms11rn_mtp_win32_PortableDeviceWin32
 	 * Method:    open
@@ -61,6 +59,11 @@ extern "C" {
 	 */
 	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_closeN
 	(JNIEnv*, jobject);
+
+	// Object methods these should all move to P:or
+
+	JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getProperties
+	(JNIEnv*, jclass, jstring);
 
 	JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getObjectsN
 	(JNIEnv*, jobject, jstring);
@@ -84,6 +87,22 @@ extern "C" {
 	JNIEXPORT jbyteArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getBytesN(JNIEnv* env, jobject, jstring id);
 
 
+
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+
+#ifndef _Included_com_github_hms11rn_mtp_win32_PortableDeviceOutputStreamWin32
+#define _Included_com_github_hms11rn_mtp_win32_PortableDeviceOutputStreamWin32
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+	//  PortableDeviceOutputStreamWin32
+	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceOutputStreamWin32_writeBuffer
+	(JNIEnv*, jobject, jstring id, jbyteArray buffer, jboolean append);
 
 
 #ifdef __cplusplus

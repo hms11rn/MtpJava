@@ -24,7 +24,6 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceObject
 	return keyAndValues(env, id);
 }
 
-
 jobject keyAndValues(JNIEnv* env, LPWSTR id) {
 	IPortableDeviceProperties* p = getPDProperties();
 	IPortableDeviceKeyCollection* coll = {};

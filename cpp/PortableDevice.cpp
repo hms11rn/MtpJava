@@ -718,3 +718,7 @@ JNIEXPORT jbyteArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin
 
     return b;
 }
+
+JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceOutputStreamWin32_writeBuffer(JNIEnv*, jobject, jstring id, jbyteArray buffer, jboolean append)
+{
+}

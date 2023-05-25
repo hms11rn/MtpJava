@@ -6,20 +6,24 @@ import java.util.Arrays;
 import java.util.Objects;
 
 class PortableDeviceOutputStreamWin32 extends OutputStream {
-
+    String objectID;
     byte[] buffer;
     int position = 0;
     int bufferGrowth = bufferGrowthGlobal;
+    int initialCapacity = bufferGrowth;
 
     /**
      * Default growth size
      */
     static int bufferGrowthGlobal = 2048;
-    PortableDeviceOutputStreamWin32(String objectId) {
-        buffer = new byte[bufferGrowth];
+
+    PortableDeviceOutputStreamWin32(String objectID) {
+        this.objectID = objectID;
+        buffer = new byte[initialCapacity];
     }
 
-    PortableDeviceOutputStreamWin32(int initialCapacity, String objectId) {
+    PortableDeviceOutputStreamWin32(int initialCapacity, String objectID) {
+        this.objectID = objectID;
         buffer = new byte[initialCapacity];
     }
     @Override
@@ -44,12 +48,13 @@ class PortableDeviceOutputStreamWin32 extends OutputStream {
             buffer = Arrays.copyOf(buffer, newCapacity);
         }
     }
-    private native void writeBuffer(byte[] buffer);
+    private native void writeBuffer(String objectID, byte[] buffer, boolean append);
 
     @Override
     public void flush() {
-        writeBuffer(buffer);
+        writeBuffer(objectID, buffer, false);
         position = 0;
+        buffer = new byte[initialCapacity]; // Clear buffer
     }
 
     @Override

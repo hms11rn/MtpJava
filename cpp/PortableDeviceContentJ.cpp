@@ -78,7 +78,7 @@ BOOL PortableDeviceContentJ::deleteFile(LPWSTR idd, int recursion)
 	if (recursion != 0 && recursion != 1)
 		recursion = 0;
 	IPortableDevicePropVariantCollection* coll;
-	IPortableDevicePropVariantCollection* result;
+	IPortableDevicePropVariantCollection* result = nullptr;
 	coll = getPropCollection();
 	PROPVARIANT del;
 	PropVariantInit(&del);
@@ -203,8 +203,6 @@ jstring PortableDeviceContentJ::addFileFromInputStream(JNIEnv* env, LPWSTR paren
 	DWORD dwBufferSize = 0;
 	DWORD totalBytesWritten = 0;
 
-	ULONG ulBytesWritten;
-
 	LPWSTR wszObjectID;
 
 	IPortableDeviceValues* pValues;
@@ -323,6 +321,7 @@ void PortableDeviceContentJ::copyFile(JNIEnv* env, LPWSTR id, LPWSTR outDir) {
 
 }
 
+void writeBytes(JNIEnv* env, BYTE* bArray, LPWSTR id) {}
 // Currently only supports updaing string value
 void PortableDeviceContentJ::updateProperty(JNIEnv* env, LPWSTR id, GUID category, DWORD pid, LPWSTR value) {
 	IPortableDeviceProperties* pProperties;
@@ -347,7 +346,7 @@ jbyteArray PortableDeviceContentJ::getBytes(JNIEnv* env, LPWSTR id) {
 
 	hr = pContent->Transfer(&pResources);
 	if (FAILED(hr)) {
-		printf("Failed to get portable device resources hr = 0x%lx\n", optimalBufferSize, hr);
+		printf("Failed to get portable device resources hr = 0x%lx\n", hr);
 		// handle error (maybe device closed?)
 		return nullptr;
 	}
@@ -380,6 +379,7 @@ jbyteArray PortableDeviceContentJ::getBytes(JNIEnv* env, LPWSTR id) {
 		return bArr;
 
 	}
+	return nullptr;
 }
 
 // from jmtp library
