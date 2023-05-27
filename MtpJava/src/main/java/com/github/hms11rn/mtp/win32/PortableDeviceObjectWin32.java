@@ -7,6 +7,7 @@ import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
 import static com.github.hms11rn.mtp.win32.PropertiesWin32.*;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigInteger;
@@ -214,11 +215,11 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
     }
     @Override
     public InputStream getInputStream() {
-        return new PortableDeviceInputStreamWin32(content.getBytes(id));
+        return new ByteArrayInputStream(content.getBytes(id));
     }
 
     /**
-     * Get OutputStream of this object
+     * OutputStream of this object to write data into
      */
     @Override
     public OutputStream getOutputStream() {

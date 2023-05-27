@@ -1,60 +1,29 @@
 package com.github.hms11rn.mtp.win32;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Arrays;
-import java.util.Objects;
+import java.io.ByteArrayOutputStream;
+import java.nio.file.AccessDeniedException;
 
-class PortableDeviceOutputStreamWin32 extends OutputStream {
+class PortableDeviceOutputStreamWin32 extends ByteArrayOutputStream {
     String objectID;
-    byte[] buffer;
-    int position = 0;
-    int bufferGrowth = bufferGrowthGlobal;
-    int initialCapacity = bufferGrowth;
-
-    /**
-     * Default growth size
-     */
-    static int bufferGrowthGlobal = 2048;
 
     PortableDeviceOutputStreamWin32(String objectID) {
+        super();
         this.objectID = objectID;
-        buffer = new byte[initialCapacity];
     }
 
     PortableDeviceOutputStreamWin32(int initialCapacity, String objectID) {
+        super(initialCapacity);
         this.objectID = objectID;
-        buffer = new byte[initialCapacity];
-    }
-    @Override
-    public void write(int b) {
-        ensureCapacity();
-        buffer[position] = (byte) b;
-        position++;
     }
 
-    @Override
-    public void write(byte[] b, int off, int len) {
-        this.buffer = b; // Set buffer to b
-        flush(); // Flush changes into file
-    }
-
-    /**
-     * ensure that the buffer is big enough to take to new byte
-     */
-    private void ensureCapacity() {
-        if ((position  + 1) > buffer.length) {
-            int newCapacity = buffer.length + bufferGrowth;
-            buffer = Arrays.copyOf(buffer, newCapacity);
-        }
-    }
-    private native void writeBuffer(String objectID, byte[] buffer, boolean append);
+    private native int writeBuffer(String objectID, byte[] buffer, boolean append, boolean deleteAndRewrite);
 
     @Override
-    public void flush() {
-        writeBuffer(objectID, buffer, false);
-        position = 0;
-        buffer = new byte[initialCapacity]; // Clear buffer
+    public void flush() throws AccessDeniedException {
+        int bytesWritten = writeBuffer(objectID, super.buf, false, false);
+        System.out.println(bytesWritten);
+        if (bytesWritten == -3)
+            throw new AccessDeniedException("Object: "  + objectID + " does not support this operation");
     }
 
     @Override

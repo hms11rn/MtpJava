@@ -719,6 +719,12 @@ JNIEXPORT jbyteArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin
     return b;
 }
 
-JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceOutputStreamWin32_writeBuffer(JNIEnv*, jobject, jstring id, jbyteArray buffer, jboolean append)
+JNIEXPORT jint JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceOutputStreamWin32_writeBuffer(JNIEnv* env, jobject, jstring id, jbyteArray buffer, jboolean append, jboolean rewrite)
 {
+    LPWSTR wszObjectID;
+
+    wszObjectID = (WCHAR*)env->GetStringChars(id, nullptr);
+    DWORD bytesWritten = content->writeBytes(env, wszObjectID, reinterpret_cast<BYTE*> (buffer), append, rewrite);
+    env->ReleaseStringChars(id, (jchar*)wszObjectID);
+    return bytesWritten;
 }

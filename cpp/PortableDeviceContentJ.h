@@ -27,6 +27,7 @@ class PortableDeviceContentJ
 
 		IPortableDevicePropVariantCollection* getPropCollection();
 
+		DWORD writeBytes(JNIEnv*, LPWSTR id, BYTE* buffer, BOOL append, BOOL rewrite);
 
 
 };

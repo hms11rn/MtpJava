@@ -7,6 +7,7 @@
 #include <PortableDeviceApi.h>
 #include <jni.h>
 #include <iostream>
+#include "algorithm"
 #include <atlbase.h>
 
 using namespace std;
@@ -35,6 +36,8 @@ IPortableDevicePropVariantCollection* PortableDeviceContentJ::getPropCollection(
 	propColl->Clear();
 	return propColl;
 }
+
+
 
 HRESULT StreamCopy(IStream* pDestStream, IStream* pSourceStream, DWORD cbTransferSize, DWORD* pcbWritten);
 
@@ -359,12 +362,9 @@ jbyteArray PortableDeviceContentJ::getBytes(JNIEnv* env, LPWSTR id) {
 	BYTE* pObjectData = new (std::nothrow) BYTE[optimalBufferSize];
 	if (pObjectData != NULL)
 	{
-		DWORD cbTotalBytesRead = 0;
-		DWORD cbTotalBytesWritten = 0;
-
 		DWORD cbBytesRead = 0;
-		DWORD cbBytesWritten = 0;
-		 do {
+
+		do {
 		hr = pObjectStream->Read(pObjectData, optimalBufferSize, &cbBytesRead);
 		if (FAILED(hr))
 		{
@@ -374,12 +374,82 @@ jbyteArray PortableDeviceContentJ::getBytes(JNIEnv* env, LPWSTR id) {
 
 		jbyteArray bArr = env->NewByteArray(optimalBufferSize);
 		env->SetByteArrayRegion(bArr, 0, optimalBufferSize, (jbyte*)pObjectData);
+		pResources->Release(); // TODO check error
 		delete[] pObjectData;
 		pObjectData = NULL;
 		return bArr;
 
 	}
 	return nullptr;
+}
+
+DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, BOOL append, BOOL rewrite)
+{
+	HRESULT hr;
+
+	CComPtr<IStream> pObjectStream;
+
+	DWORD dwOptimalBufferSize = 0;
+	DWORD dwBytesWritten = 0;
+	DWORD dwBufferSize = 0;
+
+	BYTE* newBuf = nullptr;
+
+	IPortableDeviceResources* pResources;
+	dwBufferSize = sizeof(buffer);
+
+	hr = pContent->Transfer(&pResources);
+	if (FAILED(hr)) {
+		printf("Failed to get portable device resources hr = 0x%lx\n", hr);
+		// handle error (maybe device closed?)
+		return -1;
+	}
+	hr = pResources->GetStream(id, WPD_RESOURCE_GENERIC, STGM_READWRITE, &dwOptimalBufferSize, &pObjectStream);
+	if (FAILED(hr)) {
+		printf("Failed to get Stream hr = 0x%lx\n", hr);
+		pResources->Release();
+		if (hr == E_ACCESSDENIED)
+			return -3;
+		// handle error (???)
+		return -1;
+	}
+	if (append) {
+		BYTE* pObjectData = new (std::nothrow) BYTE[dwOptimalBufferSize];
+		if (pObjectData != NULL)
+		{
+
+			DWORD cbBytesRead = 0;
+
+			do {
+				hr = pObjectStream->Read(pObjectData, dwOptimalBufferSize, &cbBytesRead);
+				if (FAILED(hr))
+				{
+					printf("! Failed to read %d bytes from the source stream, hr = 0x%lx\n", dwOptimalBufferSize, hr);
+				}
+			} while (SUCCEEDED(hr) && (cbBytesRead > 0));
+
+			BYTE* combinedArray = new BYTE[dwBufferSize + cbBytesRead];
+			std::copy(buffer, buffer + dwBufferSize, combinedArray);
+			std::copy(pObjectData, pObjectData + cbBytesRead, combinedArray);
+			delete[] pObjectData;
+		}
+	}
+	else
+		newBuf = buffer;
+	
+	hr = pObjectStream->Write(newBuf, sizeof(newBuf), &dwBytesWritten);
+	if (SUCCEEDED(hr)) {
+		pObjectStream->Commit(STGC_DEFAULT);
+		pResources->Release();
+		return true;
+	}
+	else if (FAILED(hr)) {
+		printf("! Failed to write %d bytes of object data to the destination stream, hr = 0x%lx\n", sizeof(buffer), hr);
+		pResources->Release();
+		return -1;
+	}
+	pResources->Release();
+	return -1;
 }
 
 // from jmtp library
