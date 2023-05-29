@@ -1,6 +1,7 @@
 package com.github.hms11rn.mtp.content;
 
 import com.github.hms11rn.mtp.DeviceProperties;
+import com.github.hms11rn.mtp.PortableDevice;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -17,11 +18,13 @@ import java.util.Map;
 @SuppressWarnings("unused")
 public interface PortableDeviceObject {
 
-     /**
-      * MTP Device Objects are identified by their name, rather by a unique id
-      * assigned to every object in the device.
-      * @return Unique ID of the object
-      */
+    PortableDevice getDevice();
+
+  /**
+   * MTP Device Objects are identified by their name, rather by a unique id
+   * assigned to every object in the device.
+   * @return Unique ID of the object
+   */
       String getId();
 
       /**

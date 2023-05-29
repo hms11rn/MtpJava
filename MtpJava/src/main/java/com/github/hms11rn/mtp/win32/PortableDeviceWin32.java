@@ -18,6 +18,7 @@ class PortableDeviceWin32 implements PortableDevice {
     private Map<String, Object> nativeProperties;
     private Map<String, DeviceProperties.PropertyValue> properties;
     private final PortableDeviceContentWin32 content;
+    private boolean rewrite = false;
 
     PortableDeviceWin32(String deviceID) {
         this.deviceID = deviceID;
@@ -155,6 +156,17 @@ class PortableDeviceWin32 implements PortableDevice {
         }
         return objs;
     }
+
+    @Override
+    public void setOutputStreamWriteMethod(boolean rewrite) {
+        this.rewrite = rewrite;
+    }
+
+    @Override
+    public boolean getOutputStreamWriteMethod() {
+        return rewrite;
+    }
+
     // TODO figure out why Im using string value instead of int and fix (forgot)
     @Override
     public PowerSource getPowerSource() {

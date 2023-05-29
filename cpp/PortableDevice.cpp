@@ -712,19 +712,24 @@ JNIEXPORT jbyteArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin
     LPWSTR wszObjectID;
     wszObjectID = (WCHAR*)env->GetStringChars(id, nullptr);
     
-    jbyteArray b = nullptr;
-    b = content->getBytes(env, wszObjectID);
+    BYTE* b = nullptr;
+    b = content->getBytes(env, wszObjectID, nullptr);
+
+    jbyteArray bArr = env->NewByteArray(sizeof(b));
+    env->SetByteArrayRegion(bArr, 0, sizeof(b), (jbyte*)b);
+
     env->ReleaseStringChars(id, (jchar*)wszObjectID);
 
-    return b;
+    return bArr;
 }
 
-JNIEXPORT jint JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceOutputStreamWin32_writeBuffer(JNIEnv* env, jobject, jstring id, jbyteArray buffer, jboolean append, jboolean rewrite)
+JNIEXPORT jint JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceOutputStreamWin32_writeBuffer(JNIEnv* env, jobject, jstring id, jbyteArray buffer, jint bufferSize, jboolean append, jboolean rewrite)
 {
     LPWSTR wszObjectID;
-
     wszObjectID = (WCHAR*)env->GetStringChars(id, nullptr);
-    DWORD bytesWritten = content->writeBytes(env, wszObjectID, reinterpret_cast<BYTE*> (buffer), append, rewrite);
+
+    jbyte* elements = env->GetByteArrayElements(buffer, nullptr);
+    DWORD bytesWritten = content->writeBytes(env, wszObjectID, (BYTE*) elements, bufferSize, append, rewrite);
     env->ReleaseStringChars(id, (jchar*)wszObjectID);
     return bytesWritten;
 }

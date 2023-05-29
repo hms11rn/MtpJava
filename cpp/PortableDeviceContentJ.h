@@ -23,11 +23,11 @@ class PortableDeviceContentJ
 
 		jobject getObject(LPWSTR idd, JNIEnv* env);
 		BOOL deleteFile(LPWSTR idd, int recursion);
-		jbyteArray getBytes(JNIEnv* env, LPWSTR id);
+		BYTE* getBytes(JNIEnv* env, LPWSTR id, DWORD*);
 
 		IPortableDevicePropVariantCollection* getPropCollection();
 
-		DWORD writeBytes(JNIEnv*, LPWSTR id, BYTE* buffer, BOOL append, BOOL rewrite);
+		DWORD writeBytes(JNIEnv*, LPWSTR id, BYTE* buffer, DWORD bufferSize, BOOL append, BOOL rewrite);
 
 
 };

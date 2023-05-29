@@ -161,7 +161,7 @@ jstring PortableDeviceContentJ::addFile(JNIEnv* env, LPWSTR parent, jstring java
 
 		hr = pContent->CreateObjectWithPropertiesAndData(pValues, &pDeviceStream, &dwBufferSize, nullptr);
 		if (SUCCEEDED(hr)) {
-			HRESULT hr = pDeviceStream->QueryInterface(IID_IPortableDeviceDataStream, (void**)&pDeviceDataStream); // pDeviceDataStream has nothing to do with device as of yet TODO
+			HRESULT hr = pDeviceStream->QueryInterface(IID_IPortableDeviceDataStream, (void**)&pDeviceDataStream);
 			DWORD totalBytesWritten = 0;
 			hr = StreamCopy(pDeviceDataStream, pFileStream, dwBufferSize, &totalBytesWritten);
 			if (hr == 0x80070050) {
@@ -324,7 +324,6 @@ void PortableDeviceContentJ::copyFile(JNIEnv* env, LPWSTR id, LPWSTR outDir) {
 
 }
 
-void writeBytes(JNIEnv* env, BYTE* bArray, LPWSTR id) {}
 // Currently only supports updaing string value
 void PortableDeviceContentJ::updateProperty(JNIEnv* env, LPWSTR id, GUID category, DWORD pid, LPWSTR value) {
 	IPortableDeviceProperties* pProperties;
@@ -341,7 +340,7 @@ void PortableDeviceContentJ::updateProperty(JNIEnv* env, LPWSTR id, GUID categor
 		
 }
 
-jbyteArray PortableDeviceContentJ::getBytes(JNIEnv* env, LPWSTR id) {
+BYTE* PortableDeviceContentJ::getBytes(JNIEnv* env, LPWSTR id, DWORD* size) {
 	HRESULT hr;
 	CComPtr<IStream> pObjectStream;
 	DWORD optimalBufferSize = 0;
@@ -360,95 +359,117 @@ jbyteArray PortableDeviceContentJ::getBytes(JNIEnv* env, LPWSTR id) {
 		return nullptr;
 	}
 	BYTE* pObjectData = new (std::nothrow) BYTE[optimalBufferSize];
+	
 	if (pObjectData != NULL)
 	{
 		DWORD cbBytesRead = 0;
-
+		BOOL flag = false;
 		do {
 		hr = pObjectStream->Read(pObjectData, optimalBufferSize, &cbBytesRead);
+		if (!flag) { // Original amount of bytes to read
+			*size = cbBytesRead;
+			flag = true;
+		}
 		if (FAILED(hr))
 		{
 			printf("! Failed to read %d bytes from the source stream, hr = 0x%lx\n", optimalBufferSize, hr);
 		}
 		 } while (SUCCEEDED(hr) && (cbBytesRead > 0));
-
-		jbyteArray bArr = env->NewByteArray(optimalBufferSize);
-		env->SetByteArrayRegion(bArr, 0, optimalBufferSize, (jbyte*)pObjectData);
-		pResources->Release(); // TODO check error
-		delete[] pObjectData;
-		pObjectData = NULL;
-		return bArr;
+		pResources->Release(); // TODO check if creates error
+		return pObjectData;
 
 	}
 	return nullptr;
 }
 
-DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, BOOL append, BOOL rewrite)
-{
+DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, DWORD dwBufferSize, BOOL append, BOOL rewrite)
+{	
 	HRESULT hr;
-
-	CComPtr<IStream> pObjectStream;
-
 	DWORD dwOptimalBufferSize = 0;
 	DWORD dwBytesWritten = 0;
-	DWORD dwBufferSize = 0;
 
 	BYTE* newBuf = nullptr;
+		
+	CComPtr<IStream> pObjectStream;
+	CComPtr<IStream> pDeviceStream;
 
-	IPortableDeviceResources* pResources;
-	dwBufferSize = sizeof(buffer);
+	IPortableDeviceResources* pResources = nullptr;
 
-	hr = pContent->Transfer(&pResources);
-	if (FAILED(hr)) {
-		printf("Failed to get portable device resources hr = 0x%lx\n", hr);
-		// handle error (maybe device closed?)
-		return -1;
-	}
-	hr = pResources->GetStream(id, WPD_RESOURCE_GENERIC, STGM_READWRITE, &dwOptimalBufferSize, &pObjectStream);
-	if (FAILED(hr)) {
-		printf("Failed to get Stream hr = 0x%lx\n", hr);
-		pResources->Release();
-		if (hr == E_ACCESSDENIED)
-			return -3;
-		// handle error (???)
-		return -1;
-	}
 	if (append) {
-		BYTE* pObjectData = new (std::nothrow) BYTE[dwOptimalBufferSize];
-		if (pObjectData != NULL)
-		{
+		DWORD dwObjectDataLength = 0;
+		BYTE* pObjectData = getBytes(env, id, &dwObjectDataLength);
+		BYTE* combinedArray = new BYTE[dwBufferSize + dwObjectDataLength];
+		std::copy(pObjectData, pObjectData + dwObjectDataLength, combinedArray);
+		std::copy(buffer, buffer + dwBufferSize, combinedArray + dwObjectDataLength);
+		newBuf = combinedArray;
+		delete[] pObjectData;
+		dwBufferSize += dwObjectDataLength;
+		cout << "append enabled, new buffer size: " << dwBufferSize << endl;
 
-			DWORD cbBytesRead = 0;
-
-			do {
-				hr = pObjectStream->Read(pObjectData, dwOptimalBufferSize, &cbBytesRead);
-				if (FAILED(hr))
-				{
-					printf("! Failed to read %d bytes from the source stream, hr = 0x%lx\n", dwOptimalBufferSize, hr);
-				}
-			} while (SUCCEEDED(hr) && (cbBytesRead > 0));
-
-			BYTE* combinedArray = new BYTE[dwBufferSize + cbBytesRead];
-			std::copy(buffer, buffer + dwBufferSize, combinedArray);
-			std::copy(pObjectData, pObjectData + cbBytesRead, combinedArray);
-			delete[] pObjectData;
-		}
 	}
 	else
 		newBuf = buffer;
-	
-	hr = pObjectStream->Write(newBuf, sizeof(newBuf), &dwBytesWritten);
+
+	if (rewrite) {
+		IPortableDeviceKeyCollection* pKeyCol;
+		IPortableDeviceValues* pValues;
+		ppProperties->GetSupportedProperties(id, &pKeyCol);
+		ppProperties->GetValues(id, pKeyCol, &pValues);
+		pValues->SetUnsignedIntegerValue(WPD_OBJECT_SIZE, dwBufferSize);
+		deleteFile(id, PORTABLE_DEVICE_DELETE_NO_RECURSION);
+		hr = pContent->CreateObjectWithPropertiesAndData(pValues, &pDeviceStream, &dwOptimalBufferSize, nullptr);
+		if (SUCCEEDED(hr)) {
+			hr = pDeviceStream->QueryInterface(IID_IPortableDeviceDataStream, (void**)&pObjectStream);
+			if (hr == 0x80070050) {
+				jclass generalPortableDeviceException = env->FindClass("com/github/hms11rn/mtp/PortableDeviceException");
+				env->ThrowNew(generalPortableDeviceException, "Could not write to file (Does that file already exist?)");
+				pKeyCol->Release();
+				pValues->Release();
+				return -1;
+			}
+		}
+		else {
+			pKeyCol->Release();
+			pValues->Release();
+			return -4;
+		}
+		pKeyCol->Release();
+		pValues->Release();
+		
+	}
+	if (!rewrite) {
+		hr = pContent->Transfer(&pResources);
+		if (FAILED(hr)) {
+			printf("Failed to get portable device resources hr = 0x%lx\n", hr);
+			// handle error (maybe device closed?)
+			return -1;
+		}
+		hr = pResources->GetStream(id, WPD_RESOURCE_GENERIC, STGM_READWRITE, &dwOptimalBufferSize, &pObjectStream);
+		if (FAILED(hr)) {
+			printf("Failed to get Stream hr = 0x%lx\n", hr);
+			pResources->Release();
+			if (hr == E_ACCESSDENIED)
+				return -3;
+			// handle error (???)
+			return -1;
+		}
+	}
+
+	hr = pObjectStream->Write(newBuf, dwBufferSize, &dwBytesWritten);
 	if (SUCCEEDED(hr)) {
 		pObjectStream->Commit(STGC_DEFAULT);
-		pResources->Release();
-		return true;
+		if (pResources != nullptr)
+			pResources->Release();
+		return dwBytesWritten;
 	}
 	else if (FAILED(hr)) {
-		printf("! Failed to write %d bytes of object data to the destination stream, hr = 0x%lx\n", sizeof(buffer), hr);
-		pResources->Release();
+		printf("Failed to write %d bytes of object data to the destination stream, hr = 0x%lx\n", dwBufferSize, hr);
+		if (pResources != nullptr)
+			pResources->Release();
 		return -1;
 	}
-	pResources->Release();
+	if (pResources != nullptr)
+		pResources->Release();
 	return -1;
 }
 

@@ -60,9 +60,15 @@ public interface PortableDevice {
      */
      PortableDeviceObject[] getRootObjects();
 
+    /**
+     * Most Portable Devices don't support being written into them
+     * @param rewrite
+     */
+    void setOutputStreamWriteMethod(boolean rewrite);
+    boolean getOutputStreamWriteMethod();
      enum PowerSource {
         BATTERY,
-         EXTERNAL,
+        EXTERNAL,
         UNKNOWN
     }
 

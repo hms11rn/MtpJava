@@ -102,7 +102,7 @@ extern "C" {
 #endif
 	//  PortableDeviceOutputStreamWin32
 	JNIEXPORT jint JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceOutputStreamWin32_writeBuffer
-	(JNIEnv*, jobject, jstring id, jbyteArray buffer, jboolean append, jboolean rewrite);
+	(JNIEnv*, jobject, jstring id, jbyteArray buffer, jint bufferSize, jboolean append, jboolean rewrite);
 
 
 #ifdef __cplusplus

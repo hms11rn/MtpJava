@@ -1,6 +1,7 @@
 package com.github.hms11rn.mtp.win32;
 
 import com.github.hms11rn.mtp.DeviceProperties;
+import com.github.hms11rn.mtp.PortableDevice;
 import com.github.hms11rn.mtp.content.PortableDeviceContainerObject;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
@@ -30,7 +31,6 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
         this.content = content;
         init(id);
         loadProperties();
-
     }
 
     /**
@@ -40,6 +40,11 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
      */
     public static native Map<String, Object> getPropertiesN(String id);
 
+    @Override
+    public PortableDevice getDevice() {
+
+        return content.device;
+    }
     private void loadProperties() {
         if (properties == null)
             reloadProperties();
@@ -223,7 +228,7 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
      */
     @Override
     public OutputStream getOutputStream() {
-        return new PortableDeviceOutputStreamWin32(id);
+        return new PortableDeviceOutputStreamWin32(id, getDevice().getOutputStreamWriteMethod());
     }
 
     /**
@@ -231,6 +236,6 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
      */
     @Override
     public OutputStream getOutputStream(int initialCapacity) {
-        return new PortableDeviceOutputStreamWin32(initialCapacity, id);
+        return new PortableDeviceOutputStreamWin32(initialCapacity, id, getDevice().getOutputStreamWriteMethod());
     }
 }
