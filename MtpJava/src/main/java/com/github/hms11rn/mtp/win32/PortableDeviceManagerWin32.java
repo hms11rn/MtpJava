@@ -7,7 +7,7 @@ class PortableDeviceManagerWin32 implements PortableDeviceManager {
 
     @Override
     public PortableDevice[] getDevices() {
-        String[] iDs = getDeviceID();
+        String[] iDs = getDeviceIDs();
         PortableDevice[] devices = new PortableDevice[iDs.length];
         int i = 0;
         for (String deviceID : iDs) {
@@ -21,7 +21,8 @@ class PortableDeviceManagerWin32 implements PortableDeviceManager {
     public native int getDeviceCount();
 
     @Override
-    public native String[] getDeviceID();
+    public native String[] getDeviceIDs();
 
-    // TODO refresh device list
+    @Override
+    public native void refresh();
 }

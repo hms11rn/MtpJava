@@ -2,12 +2,11 @@ package com.github.hms11rn.mtp.win32;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.file.AccessDeniedException;
-import java.util.Arrays;
 
 class PortableDeviceOutputStreamWin32 extends ByteArrayOutputStream {
-    private String objectID;
+    private final String objectID;
     private boolean append = false;
-    private boolean rewrite = true;
+    private final boolean rewrite;
 
     PortableDeviceOutputStreamWin32(String objectID, boolean rewrite) {
         super();

@@ -5,6 +5,7 @@ package com.github.hms11rn.mtp;
  * if a function was called it will throw this exception<br>
  * Used by Jni
  */
+@SuppressWarnings("unused")
 public class DeviceClosedException extends RuntimeException {
     DeviceClosedException(String str) {
         super(str);

@@ -1,13 +1,9 @@
 #include "pch.h"
-
 #include "mtp.h"
 
-#include <iostream>
 #include "PortableDeviceManager.h"
 
-using namespace std;
-
-IPortableDeviceManager* pDeviceManager = nullptr;
+IPortableDeviceManager* pDeviceManager;
 
 HRESULT cHr = S_OK;
 IPortableDeviceManager* getDeviceManager()
@@ -47,14 +43,16 @@ void ReleaseDeviceManager()
         pDeviceManager->Release();
         pDeviceManager = nullptr;
     }
+    CoUninitialize();
+
 }
 
  int getDeviceCount() {
-    // obtain amount of devices
-    DWORD deviceCount = 0;
-    HRESULT hr;
-    IPortableDeviceManager* pManager;
 
+    HRESULT hr;
+    DWORD deviceCount = 0;
+
+    IPortableDeviceManager* pManager;
 
     pManager = getDeviceManager();
 
@@ -67,15 +65,18 @@ void ReleaseDeviceManager()
             handleException("DEVICE_MGR", "Failed to get the number of devices on the system", hr);
             return 0;
        } 
-    // Uninitialize
+
     return deviceCount;
 }
 
  jobjectArray getDeviceHWID(JNIEnv *env) {     
-     jobjectArray deviceNames;
-     DWORD size;
      HRESULT hr;
+     DWORD size = 0;
+
      IPortableDeviceManager* pManager;
+
+     jobjectArray deviceNames;
+     LPWSTR* wszDeviceIDs;
 
      pManager = getDeviceManager();
      if (FAILED(cHr)) {
@@ -87,7 +88,8 @@ void ReleaseDeviceManager()
          handleException("DEVICE_MGR", "Failed to get the number of devices on the system", hr);
          return nullptr;
      }
-     LPWSTR* wszDeviceIDs = new LPWSTR[size];
+
+     wszDeviceIDs = new LPWSTR[size];
      hr = getDeviceManager()->GetDevices(wszDeviceIDs, &size);
      if (FAILED(hr)) {
          handleException("DEVICE_MGR", "Failed to get the device IDs" , hr);
@@ -106,6 +108,7 @@ void ReleaseDeviceManager()
    
      return nullptr;
  }
+
  JNIEXPORT jint JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceManagerWin32_getDeviceCount
  (JNIEnv* env)
  {  
@@ -114,9 +117,17 @@ void ReleaseDeviceManager()
      return ji;
  }
 
- JNIEXPORT jobjectArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceManagerWin32_getDeviceID
+ JNIEXPORT jobjectArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceManagerWin32_getDeviceIDs
  (JNIEnv* env)
  {
 
      return getDeviceHWID(env);
+ }
+
+ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceManagerWin32_refresh
+ (JNIEnv*) {
+     IPortableDeviceManager* pManager;
+
+     pManager = getDeviceManager();
+     pManager->RefreshDeviceList();
  }

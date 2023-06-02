@@ -1,3 +1,5 @@
+#pragma once
+
 #include <jni.h>
 #include <PortableDeviceApi.h>
 
@@ -19,7 +21,20 @@ extern "C" {
 	JNIEXPORT jint JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceManagerWin32_getDeviceCount
 	(JNIEnv*);
 
-	JNIEXPORT jobjectArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceManagerWin32_getDeviceID
+	/*
+	 * Class:     com_github_hms11rn_mtp_win32_PortableDeviceManagerWin32
+	 * Method:    getDeviceIDs
+	 * Signature: ()[Ljava/lang/String;
+	 */
+	JNIEXPORT jobjectArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceManagerWin32_getDeviceIDs
+	(JNIEnv*);
+
+	/*
+	 * Class:     com_github_hms11rn_mtp_win32_PortableDeviceManagerWin32
+	 * Method:    refresh
+	 * Signature: ()V
+	 */
+	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceManagerWin32_refresh
 	(JNIEnv*);
 
 #ifdef __cplusplus

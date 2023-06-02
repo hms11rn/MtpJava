@@ -8,7 +8,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,7 +39,7 @@ class PortableDeviceContentWin32 {
     /**
      * Use {@link Files#probeContentType(Path)} to obtain mime  of file,
      * or a library like Apache Tika
-     * @return newly craeted object ID
+     * @return newly created object ID
      */
     protected String addFileFromInputStream(String name, String parentID, InputStream inStream, String mimeType) {
         String type = getFileType(mimeType);
@@ -54,15 +53,13 @@ class PortableDeviceContentWin32 {
         device.copyFileN(id, path);
     }
 
-    protected HashMap<String, Boolean> b = new HashMap<>();
 
     /**
      *  There is a bug with WPD Api that causes weird hanging, TODO attempt to fix it
      */
     protected boolean delete(String id, int recursive) {
       boolean did =  device.deleteFileN(id, recursive);
-      b.put(id, did);
-      return false;
+      return did;
     }
     protected List<String> getObjectsIDs(String id) {
         Map<String, String> objectIDs;
@@ -72,18 +69,18 @@ class PortableDeviceContentWin32 {
     protected PortableDeviceObject[] getObjects(String containerId) {
         Map<String, String> objects;
         objects = device.getObjectsN(containerId);
-        PortableDeviceObject[] retObjs = new PortableDeviceObject[objects.size()];
+        PortableDeviceObject[] returnObjects = new PortableDeviceObject[objects.size()];
         int i = 0;
         for (String id : objects.keySet()) {
-            retObjs[i] = getObjectFromID(id, objects.get(id));
+            returnObjects[i] = getObjectFromID(id, objects.get(id));
             i++;
         }
-        return retObjs;
+        return returnObjects;
     }
 
     protected void rename(String id, String newName) {
-        device.updatePropertyN(id, PropertiesWin32.WPD_OBJECT_NAME.guid, PropertiesWin32.WPD_OBJECT_NAME.pid, newName);
-        device.updatePropertyN(id, PropertiesWin32.WPD_OBJECT_ORIGINAL_FILE_NAME.guid, PropertiesWin32.WPD_OBJECT_ORIGINAL_FILE_NAME.pid, newName);
+        device.updatePropertyN(id, PropertiesWin32.WPD_OBJECT_NAME.guid, PropertiesWin32.WPD_OBJECT_NAME.pid, VarType.STRING.value, newName);
+        device.updatePropertyN(id, PropertiesWin32.WPD_OBJECT_ORIGINAL_FILE_NAME.guid, PropertiesWin32.WPD_OBJECT_ORIGINAL_FILE_NAME.pid, VarType.STRING.value, newName);
     }
 
     protected byte[] getBytes(String id) {
@@ -108,7 +105,7 @@ class PortableDeviceContentWin32 {
     }
 
     /**
-     * Jmtp lib
+     * JMtp lib
      * @param type Files.probeContentType()
      * @return type of object
      */
@@ -156,4 +153,16 @@ class PortableDeviceContentWin32 {
     }
     }
 
+ enum VarType {
+    STRING(31),
+    INT(19),
+    LONG(21),
+     BOOLEAN(11),
+     CLSID(72);
 
+    final int value;
+
+     VarType(int value) {
+        this.value = value;
+    }
+}

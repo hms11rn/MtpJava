@@ -62,7 +62,7 @@ public interface PortableDevice {
 
     /**
      * Most Portable Devices don't support being written into them
-     * @param rewrite
+     * @param rewrite Attempt to get OutputStream from Object or delete and rewrite
      */
     void setOutputStreamWriteMethod(boolean rewrite);
     boolean getOutputStreamWriteMethod();

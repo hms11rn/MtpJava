@@ -1,5 +1,3 @@
-#pragma once
-
 #include "PortableDeviceObjectJ.h"
 
 #include <jni.h>
@@ -9,25 +7,32 @@ static IPortableDeviceProperties* ppProperties;
 
 class PortableDeviceContentJ
 {
+	private:
+		IPortableDevicePropVariantCollection* getPropCollection();
+		IPortableDeviceKeyCollection* getContentTypeKey();
+
 	public:
 		void release();
-		PortableDeviceContentJ(IPortableDeviceContent*, LPWSTR deviceID);
+		PortableDeviceContentJ(IPortableDeviceContent*, IPortableDeviceContent2*);
 		IPortableDeviceContent* getContent();
-		
-		IPortableDeviceProperties* getProperties();
-		jstring addFile(JNIEnv* env, LPWSTR parent, jstring, jobject, jstring contentType, jstring contentFormat, HRESULT*);
-		jstring addFileFromInputStream(JNIEnv* env, LPWSTR parent, LPWSTR name, jobject inputStream, LPWSTR type, LPWSTR format);
-		jstring addFolder(JNIEnv* env, LPWSTR javaName, LPWSTR parent);
-		void copyFile(JNIEnv* env, LPWSTR id, LPWSTR outDir);
-		void updateProperty(JNIEnv* env, LPWSTR id, GUID category, DWORD pid, LPWSTR value);
 
-		jobject getObject(LPWSTR idd, JNIEnv* env);
-		BOOL deleteFile(LPWSTR idd, int recursion);
+		jobject getObjects(JNIEnv* env, jobject, jstring parentID);
+		// Add Object From File
+		jstring addObjectFromFile(JNIEnv* env, LPWSTR parent, jstring, jobject, jstring contentType, jstring contentFormat, HRESULT*);
+		// Add Object From Java InputStream
+		jstring addObjectFromInputStream(JNIEnv* env, LPWSTR parent, LPWSTR name, jobject inputStream, LPWSTR type, LPWSTR format);
+		// Add Folder
+		jstring addFolderObject(JNIEnv* env, LPWSTR javaName, LPWSTR parent);
+		// Copy Object to File
+		void copyObjectToFile(JNIEnv* env, LPWSTR id, LPWSTR outDir);
+		// Update Property in the Object
+		void updateProperty(JNIEnv* env, LPWSTR id, GUID category, DWORD pid, int vt, LPWSTR value);
+		// Delete Object
+		BOOL deleteFile(LPWSTR idd, int recursion);		
+		// Get Bytes of Object
 		BYTE* getBytes(JNIEnv* env, LPWSTR id, DWORD*);
-
-		IPortableDevicePropVariantCollection* getPropCollection();
-
-		DWORD writeBytes(JNIEnv*, LPWSTR id, BYTE* buffer, DWORD bufferSize, BOOL append, BOOL rewrite);
+		// Write Bytes onto Object
+		DWORD writeBytes(JNIEnv*, LPWSTR id, BYTE* buffer, DWORD bufferSize, BOOL append, DWORD rewrite);
 
 
 };

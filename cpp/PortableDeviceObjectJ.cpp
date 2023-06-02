@@ -1,21 +1,10 @@
 #include "pch.h"
+
+#include "mtp.h"
 #include "PortableDeviceObjectJ.h"
 #include "PortableDevice.h"
-#include "PortableDeviceContentJ.h"
-#include "mtp.h"
 
-#include <iostream>
 #include <PortableDevice.h>
-
-using namespace std;
-
-LPWSTR wid;
-
-JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceObjectWin32_init(JNIEnv* env, jobject cls, jstring idd)
-{
-	wid = (WCHAR*)env->GetStringChars(idd, nullptr);
-}
-
 
 JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceObjectWin32_getPropertiesN(JNIEnv* env, jobject cls, jstring idJava)
 {
@@ -52,4 +41,3 @@ jobject keyAndValues(JNIEnv* env, LPWSTR id) {
 	deviceValues->Release();
 	return keyAndValuesJava;
 }
-

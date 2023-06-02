@@ -13,8 +13,6 @@ import java.util.Map;
 class PortableDeviceWin32 implements PortableDevice {
     private final String deviceID;
 
-    private boolean isOpen;
-
     private Map<String, Object> nativeProperties;
     private Map<String, DeviceProperties.PropertyValue> properties;
     private final PortableDeviceContentWin32 content;
@@ -123,13 +121,11 @@ class PortableDeviceWin32 implements PortableDevice {
     public void open() {
         openN();
         reloadProperties();
-        isOpen = true;
     }
 
     @Override
     public void close() {
         closeN();
-        isOpen = false;
     }
 
     protected native void openN();
@@ -142,19 +138,19 @@ class PortableDeviceWin32 implements PortableDevice {
     protected native String addFolderObjectN(String id, String parentId);
     protected native void copyFileN(String id, String path);
     protected native boolean deleteFileN(String id, int recursion);
-    protected native void updatePropertyN(String id, String fmtid, int pid, String value);
+    protected native void updatePropertyN(String id, String fmtid, int pid, int varType, String value);
     protected native byte[] getBytesN(String id);
 
     @Override
     public PortableDeviceObject[] getRootObjects() {
-        Map<String, String> objects = getObjectsN("DEVICE");
-        PortableDeviceObject[] objs = new PortableDeviceObject[objects.size()];
+        Map<String, String> objectsMap = getObjectsN("DEVICE");
+        PortableDeviceObject[] objects = new PortableDeviceObject[objectsMap.size()];
         int i = 0;
-        for (String id : objects.keySet()) {
-            objs[i] = content.getObjectFromID(id, objects.get(id));
+        for (String id : objectsMap.keySet()) {
+            objects[i] = content.getObjectFromID(id, objectsMap.get(id));
             i++;
         }
-        return objs;
+        return objects;
     }
 
     @Override

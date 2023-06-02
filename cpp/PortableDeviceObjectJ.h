@@ -1,5 +1,3 @@
-#pragma once
-
 #include <PortableDeviceApi.h>
 #include <jni.h>
 
@@ -10,10 +8,6 @@ extern "C" {
 #endif
 	JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceObjectWin32_getPropertiesN
 	(JNIEnv*, jobject, jstring id);
-
-	JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceObjectWin32_init
-	(JNIEnv* env, jobject, jstring);
-
 
 #ifdef __cplusplus
 }

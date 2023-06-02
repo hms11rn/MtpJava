@@ -29,7 +29,6 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
     protected PortableDeviceObjectWin32(String id, PortableDeviceContentWin32 content) {
         this.id = id;
         this.content = content;
-        init(id);
         loadProperties();
     }
 
@@ -67,9 +66,6 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
        loadProperties();
         return properties;
     }
-
-
-    public native void init(String id);
 
     @Override
     public String getId() {

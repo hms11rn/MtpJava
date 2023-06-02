@@ -68,7 +68,8 @@ public class PortableDeviceContainerObjectWin32 extends PortableDeviceObjectWin3
                 } else {
                     String name = obj.getOriginalFileName();
                     File newDir = new File(path + "\\" + name);
-                    newDir.mkdir();
+                    if (!newDir.mkdir())
+                        System.out.println("Failed to create directory: " + newDir.getName() + " : " + newDir.getAbsolutePath());
                     obj.copy(newDir.getAbsolutePath());
                 }
             }

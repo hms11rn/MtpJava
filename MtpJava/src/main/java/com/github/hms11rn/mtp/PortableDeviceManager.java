@@ -18,7 +18,9 @@ public interface PortableDeviceManager {
     /**
      * @return array of unique hardware IDs for each device
      */
-    String[] getDeviceID();
+    String[] getDeviceIDs();
+
+    void refresh();
 
     /**
      * Get the Device Manager of current OS (As of now Supports only Windows)
