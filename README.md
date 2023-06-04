@@ -3,9 +3,8 @@
 <b>MtpJava</b> is a Java library that provides a way to communicate with MTP devices using the [Windows Protocol Devices](https://learn.microsoft.com/en-us/windows/win32/windows-portable-devices) (WPD) API and Java Native Interface (JNI).
 
 ## Requirements
- * JDK Version 18 or higher
+ * JDK Version 8 or higher
  * Windows Opreating System (Currently Linux and Mac aren't supported)
- * Windows Driver Kit (WDK) version 10 or higher
  
  ## Installation
  1. Download MtpJava.jar and add to your classpath
