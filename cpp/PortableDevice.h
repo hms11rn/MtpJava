@@ -3,17 +3,16 @@
 
 IPortableDeviceProperties* getPDProperties();
 
-void initializePropVariantCollection();
 IPortableDevicePropVariantCollection* getPropVariantCollection();
 
 
 /// portable device values
 IPortableDeviceValues* getPortableDeviceValues();
-HRESULT InitializePortableDeviceValues();
 void releasePortableDeviceValues();
 
 IPortableDevice* getPortableDevice();
-HRESULT InitializePortableDevice();
+
+IPortableDeviceContent2* getContent2();
 
 jstring getFriendlyName(JNIEnv* env, jstring deviceID);
 

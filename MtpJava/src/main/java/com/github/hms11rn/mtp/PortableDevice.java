@@ -6,6 +6,7 @@ import java.util.Map;
 
 public interface PortableDevice {
 
+    String getID();
     /**
      * Name of the device that is Human Readable
      * @return friendly name

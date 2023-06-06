@@ -13,7 +13,7 @@ class PortableDeviceContentJ
 
 	public:
 		void release();
-		PortableDeviceContentJ(IPortableDeviceContent*, IPortableDeviceContent2*);
+		PortableDeviceContentJ(IPortableDeviceContent*);
 		IPortableDeviceContent* getContent();
 
 		jobject getObjects(JNIEnv* env, jobject, jstring parentID);

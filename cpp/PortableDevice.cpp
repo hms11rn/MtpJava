@@ -3,6 +3,7 @@
 #include "PortableDeviceManager.h"
 #include "PortableDeviceContentJ.h"
 
+#include "PortableDeviceServiceManager.h"
 #include <PortableDeviceApi.h>
 #include <PortableDevice.h>
 #include <iostream>
@@ -12,6 +13,7 @@
 using namespace std;
 
 jstring deviceID;
+LPWSTR wsDeviceID;
 
 IPortableDeviceProperties* pProperties;
 
@@ -22,11 +24,12 @@ IPortableDevicePropVariantCollection* propVariantCollections = nullptr;
 //
 PortableDeviceContentJ* content;
 IPortableDeviceService* pService; // future
-IPortableDeviceContent2* pdContent2; // future
+IPortableDeviceContent2* pContent2; // future
 
 IPortableDeviceService* getService() {
+    HRESULT hr;
     if (pService == nullptr) {
-        HRESULT hr = CoCreateInstance
+        hr = CoCreateInstance
         (CLSID_PortableDeviceService, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pService));
         if (FAILED(hr)) {
             handleException("COM", "Failed to create IPortableDeviceServer", hr);
@@ -34,9 +37,13 @@ IPortableDeviceService* getService() {
     }
     return pService;
 }
-IPortableDeviceContent2* getContent2(LPWSTR wsDeviceID) {
+IPortableDeviceContent2* getContent2() {
+
     HRESULT hr;
-    
+
+    LPWSTR* wsPnPServiceID;
+    DWORD servicesSize;
+
     IPortableDeviceService* service = getService();
     IPortableDeviceValues* pClientInformation = getPortableDeviceValues();
 
@@ -44,19 +51,25 @@ IPortableDeviceContent2* getContent2(LPWSTR wsDeviceID) {
     pClientInformation->SetUnsignedIntegerValue(WPD_CLIENT_MAJOR_VERSION, 0);
     pClientInformation->SetUnsignedIntegerValue(WPD_CLIENT_MINOR_VERSION, 0);
     pClientInformation->SetUnsignedIntegerValue(WPD_CLIENT_REVISION, 1);
-    pClientInformation->SetUnsignedIntegerValue(WPD_CLIENT_SECURITY_QUALITY_OF_SERVICE, SECURITY_IMPERSONATION);
- 
-
-    hr = service->Open(wsDeviceID, nullptr);
+    hr = pClientInformation->SetUnsignedIntegerValue(WPD_CLIENT_SECURITY_QUALITY_OF_SERVICE, SECURITY_IMPERSONATION);
+    
+    wsPnPServiceID = getService(wsDeviceID, &servicesSize);
+    if (servicesSize == 0)
+        return nullptr;
+    
+    hr = service->Open(wsPnPServiceID[0], pClientInformation); // todo currently just first service
     if (FAILED(hr)) {
-        handleException("DEVICE", "Failed to open Device Services", hr);
+        cout << " ! Failed to open Device Services, HRESULT = " << std::hex << hr << endl;
         return nullptr;
     }
-    hr = service->Content(&pdContent2);
+    hr = service->Content(&pContent2);
     if (FAILED(hr)) {
-        handleException("DEVICE", "Failed to get IPortableDeviceContent2", hr);
+        cout << " ! Failed to get IPortableDeviceContent2, HRESULT = " << std::hex << hr << endl;
+        return nullptr;
     }
-    return pdContent2;
+    pClientInformation->Release();
+
+    return pContent2;
 }
 
 IPortableDeviceProperties* getPDProperties() {
@@ -64,44 +77,30 @@ IPortableDeviceProperties* getPDProperties() {
     return pProperties;
 }
 
-void initializePropVariantCollection() {
+IPortableDevicePropVariantCollection* getPropVariantCollection() {
     if (propVariantCollections == nullptr) {
         HRESULT hr = CoCreateInstance(CLSID_PortableDevicePropVariantCollection, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&propVariantCollections));
         if (FAILED(hr)) {
             handleException("COM", "Failed to create IPortableDevicePropVariantCollection", hr);
         }
     }
-}
-
-IPortableDevicePropVariantCollection* getPropVariantCollection() {
-    initializePropVariantCollection();
+    propVariantCollections->Clear();
     return propVariantCollections;
+    
 }
 IPortableDeviceValues* getPortableDeviceValues()
-{
-    HRESULT hr = InitializePortableDeviceValues();
+{    
+    HRESULT hr = S_OK;
+    if (pClientValues == nullptr)
+    {
+        HRESULT hr = CoCreateInstance(CLSID_PortableDeviceValues,
+            nullptr, CLSCTX_INPROC_SERVER, IID_IPortableDeviceValues, (VOID**)&pClientValues);
+    }
     if (FAILED(hr)) {
         handleException("COM", "Failed to create IPortableDeviceValues", hr);
     }
     pClientValues->Clear();
     return pClientValues;
-}
-
-HRESULT InitializePortableDeviceValues()
-{
-    if (pClientValues == nullptr)
-    {
-        HRESULT hr = CoCreateInstance(CLSID_PortableDeviceValues,
-            NULL,
-            CLSCTX_INPROC_SERVER,
-            IID_IPortableDeviceValues,
-            (VOID**)&pClientValues);
-
-        if (FAILED(hr)) {
-            return hr;
-        }
-    }
-    return S_OK;
 }
 
 void releasePortableDeviceValues() {
@@ -114,29 +113,19 @@ void releasePortableDeviceValues() {
 
 IPortableDevice* getPortableDevice()
 {
-    HRESULT hr = InitializePortableDevice();
+    HRESULT hr = S_OK;
+    if (pPortableDevice == nullptr)
+    {
+        HRESULT hr = CoCreateInstance(CLSID_PortableDeviceFTM,
+            nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pPortableDevice));
+    }
     if (FAILED(hr)) {
         handleException("COM", "Failed to create IPortableDevice", hr);
     }
     return pPortableDevice;
 }
 
-HRESULT InitializePortableDevice()
-{
-    if (pPortableDevice == nullptr)
-    {
-        HRESULT hr = CoCreateInstance(CLSID_PortableDeviceFTM,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            IID_PPV_ARGS(&pPortableDevice));
 
-        if (FAILED(hr)) {
-            return hr;
-        }
-    }
-
-    return S_OK;
-}
 jstring getFriendlyName(JNIEnv* env, jstring deviceID) {
     IPortableDeviceManager* pDeviceManager;
     LPWSTR wszDeviceID;
@@ -186,7 +175,6 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
 
     env->ReleaseStringChars(deviceID, (jchar*)wszDeviceID);
     delete[] wszDeviceManufacturer;
-
     return manufacturer;
 }
 
@@ -227,24 +215,13 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     pDevice = getPortableDevice();
 
     
-    if (content == nullptr) {
-        hr = pDevice->Content(&pContent);
-        if (FAILED(hr)) {
-            if (hr == E_WPD_DEVICE_NOT_OPEN || hr == E_POINTER) {
-                jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/DeviceClosedException");
-                string devIdChar = env->GetStringUTFChars(getFriendlyName(env, deviceID), nullptr);
-                env->ThrowNew(deviceClosedException, devIdChar.append(" is not opened. use PortableDevice#open() to open").c_str());
-            }
-            return nullptr;
-        }
-        PortableDeviceContentJ* content = new PortableDeviceContentJ(pContent, getContent2(wszDeviceID));
-    }
+   
     pContent = content->getContent();
 
     if (pProperties != nullptr) {
         pProperties->Release();
+        pProperties = nullptr;
     }
-    pProperties = nullptr;
   
     hr = pContent->Properties(&pProperties);
     if (FAILED(hr)) {
@@ -460,8 +437,12 @@ HRESULT OpenDevice(LPCWSTR wszPnPDeviceID, IPortableDevice** ppDevice, LPCWSTR c
 JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_openN
 (JNIEnv* env, jobject obj) {
     HRESULT hr;
+
     IPortableDevice* pDevice;
+    IPortableDeviceContent* pContent;
+
     LPWSTR wszDeviceID;
+
     jfieldID fid;
     jstring jsDeviceID;
 
@@ -469,15 +450,28 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_ope
     fid = env->GetFieldID(env->GetObjectClass(obj), "deviceID", "Ljava/lang/String;");
     jsDeviceID = (jstring)env->GetObjectField(obj, fid);
     wszDeviceID = (WCHAR*)env->GetStringChars(jsDeviceID, NULL);
+
+    wsDeviceID = wszDeviceID;
     if (isOpen) {
         env->ReleaseStringChars(jsDeviceID, (jchar*)wszDeviceID);
         return;
     }
     hr = OpenDevice(wszDeviceID, &pDevice, L"Unknown-MtpLibJava", 1, 0, 0);
     if (FAILED(hr))
-    {
+    {      
         handleException("DEVICE", "Failed to open Portable Device", hr);
     }
+    wcout << L"WPD: Opened Device: " << wszDeviceID << L" , Attempting to create and open Service" << endl;
+    hr = pDevice->Content(&pContent);
+    if (FAILED(hr)) {
+        if (hr == E_WPD_DEVICE_NOT_OPEN || hr == E_POINTER) {
+            jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/DeviceClosedException");
+            string devIdChar = env->GetStringUTFChars(getFriendlyName(env, deviceID), nullptr);
+            env->ThrowNew(deviceClosedException, devIdChar.append(" is not opened. use PortableDevice#open() to open").c_str());
+        }
+    }
+    content = new PortableDeviceContentJ(pContent);
+    
     env->ReleaseStringChars(jsDeviceID, (jchar*)wszDeviceID);;
 }
 
@@ -507,6 +501,14 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_clo
         content->release();
         delete content;
         content = nullptr;
+    }
+    if (pService != nullptr) {
+        pService->Release();
+        pService = nullptr;
+    }
+    if (pContent2 != nullptr) {
+        pContent2->Release();
+        pContent2 = nullptr;
     }
     isOpen = false;
     env->ReleaseStringChars(jsDeviceID, (jchar*)wszDeviceID);

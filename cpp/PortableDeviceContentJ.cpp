@@ -13,7 +13,7 @@
 using namespace std;
 
 IPortableDeviceContent* pContent;
-IPortableDeviceContent2* pContent2;
+IPortableDeviceContent2* pContent2J;
 IPortableDeviceValues* pCollection;
 IPortableDevicePropVariantCollection* propColl;
 IPortableDeviceKeyCollection* contentTypeKey;
@@ -58,10 +58,9 @@ IPortableDevicePropVariantCollection* PortableDeviceContentJ::getPropCollection(
 	return propColl;
 }
 
-PortableDeviceContentJ::PortableDeviceContentJ(IPortableDeviceContent* content, IPortableDeviceContent2* content2)
+PortableDeviceContentJ::PortableDeviceContentJ(IPortableDeviceContent* content)
 {	
 	pContent = content;
-	pContent2 = content2;
 	if (ppProperties == nullptr) {
 
 		HRESULT hr = content->Properties(&ppProperties);
@@ -567,7 +566,9 @@ DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, D
 			return -1;
 		}
 	}
-
+	if (rewrite == 2) {
+		IPortableDeviceContent2* pContent2 = getContent2();
+	}
 	hr = pObjectStream->Write(newBuf, dwBufferSize, &dwBytesWritten);
 	if (SUCCEEDED(hr)) {
 		pObjectStream->Commit(STGC_DEFAULT);

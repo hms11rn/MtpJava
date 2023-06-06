@@ -166,6 +166,7 @@
     <ClInclude Include="PortableDeviceContentJ.h" />
     <ClInclude Include="PortableDeviceManager.h" />
     <ClInclude Include="PortableDeviceObjectJ.h" />
+    <ClInclude Include="PortableDeviceServiceManager.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
@@ -181,6 +182,7 @@
     <ClCompile Include="PortableDeviceContentJ.cpp" />
     <ClCompile Include="PortableDeviceManager.cpp" />
     <ClCompile Include="PortableDeviceObjectJ.cpp" />
+    <ClCompile Include="PortableDeviceServiceManager.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

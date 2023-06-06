@@ -35,6 +35,9 @@
     <ClInclude Include="PortableDeviceContentJ.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PortableDeviceServiceManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -56,6 +59,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PortableDeviceContentJ.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PortableDeviceServiceManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

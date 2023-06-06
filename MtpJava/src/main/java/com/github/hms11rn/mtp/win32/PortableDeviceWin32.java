@@ -40,6 +40,11 @@ class PortableDeviceWin32 implements PortableDevice {
 
 
     @Override
+    public String getID() {
+        return deviceID;
+    }
+
+    @Override
     public void reloadProperties() {
         nativeProperties = getProperties(deviceID);
         if (nativeProperties == null) {
