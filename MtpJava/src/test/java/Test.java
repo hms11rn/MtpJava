@@ -10,7 +10,7 @@ import java.util.Map;
 
 @SuppressWarnings("all") // Suppressing all warnings since this is a test class
 // TODO write proper tests
-public class Test {
+public class Test implements  Serializable{
 
     @org.junit.jupiter.api.Test
     static void test() throws IOException {
@@ -19,32 +19,15 @@ public class Test {
         System.out.println("Friendly name: " + pd.getFriendlyName());
         System.out.println("Manufacture: " + pd.getManufacture());
         System.out.println("Description: " + pd.getDescription());
+
         pd.open(); // potential resource leak
-        System.out.println("Opened");
-        Map<String, DeviceProperties.PropertyValue> m = pd.getProperties();
-        for (int i = 0; i < m.size(); i++) {
-            System.out.print(new ArrayList(m.keySet()).get(i) + " :: ");
-            System.out.println(new ArrayList<>(m.values()).get(i));
-        }
 
-        //
-        System.out.println(pd.getSerialNumber());
-        System.out.println(pd.getFirmwareVersion());
-        System.out.println(pd.getPowerSource());
-        System.out.println(pd.getPowerLevel());
-        System.out.println(pd.getProtocol());
-        System.out.println(pd.IsNonConsumableSupported());
-        System.out.println(pd.getSyncPartner());
 
-        pd.reloadProperties();
-        System.out.println(pd.getPowerSource());
-        pd.close();
-        pd.open();
         PortableDeviceContainerObject obj = (PortableDeviceContainerObject) pd.getRootObjects()[0];
         PortableDeviceContainerObject j = (PortableDeviceContainerObject) obj.getChildObjects()[0];
-
-
-
+        System.out.println(pd.getObject("Internal storage/music").getContentType());
+        if (true)
+            return;
         System.out.println(j.getName());
         Map<String, DeviceProperties.PropertyValue> m1 = j.getProperties();
         for (int i = 0; i < m1.size(); i++) {
@@ -65,12 +48,13 @@ public class Test {
                 pd.setOutputStreamWriteMethod(true);
                 OutputStream s = j1.getOutputStream();
                 BufferedWriter br = new BufferedWriter(new OutputStreamWriter(s));
-                br.write(" : ayy");
+                br.write(" : aaa");
                 br.flush();
 
             }
         }
         for (PortableDeviceObject e : j.getChildObjects()) {
+
             if (e.getName().equals("name")) {
                 System.out.println("Found name object");
                 if (e.isContainer())
@@ -79,10 +63,6 @@ public class Test {
                 e.copy("C:\\Users\\Test\\FolderToCopy"); // this is going to copy recursively
             }
         }
-        pd.close();
-        System.out.println("Closed");
-        pd.open();
-        System.out.println("Opened");
 
     //    System.out.println(j.getName());
         //    System.out.println(j.getDateModified());

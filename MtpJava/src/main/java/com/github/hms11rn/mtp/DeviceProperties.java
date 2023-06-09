@@ -10,6 +10,10 @@ import java.math.BigInteger;
  */
 public class DeviceProperties {
 
+    /**
+     * Default Device ID
+     */
+    public static final String DEVICE_ROOT_ID = "DEVICE";
     public static String MANUFACTURE;
     public static String SERIAL_NUMBER;
     public static String POWER_SOURCE;

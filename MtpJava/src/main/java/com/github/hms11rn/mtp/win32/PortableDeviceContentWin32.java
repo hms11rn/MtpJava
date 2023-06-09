@@ -1,5 +1,6 @@
 package com.github.hms11rn.mtp.win32;
 
+import com.github.hms11rn.mtp.DeviceProperties;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
 import java.io.File;
@@ -8,6 +9,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +21,13 @@ class PortableDeviceContentWin32 {
         this.device = device;
     }
     protected PortableDeviceObject getObjectFromID(String id, String type) {
+        if (type == null) {
+           Map<String, DeviceProperties.PropertyValue> objectProperties = convertNativePropertiesToJava(device.getProperties(id));
+           String contentType = objectProperties.get(PropertiesWin32.WPD_OBJECT_CONTENT_TYPE.toString()).getStringValue();
+           if (contentType.equals(PropertiesWin32.WPD_CONTENT_TYPE_FOLDER.toString()))
+               return new PortableDeviceFolderObjectWin32(id, this);
+            return new PortableDeviceObjectWin32(id, this);
+        }
         if (type.equals("FUNCTIONAL_CATEGORY_STORAGE")) {
             return new PortableDeviceStorageObjectWin32(id, this);
         } else if (type.equals("CONTENT_TYPE_FOLDER"))
@@ -66,9 +75,10 @@ class PortableDeviceContentWin32 {
         objectIDs = device.getObjectsN(id);
         return new ArrayList<>(objectIDs.keySet());
     } // TODO implement getObjectIDs
-    protected PortableDeviceObject[] getObjects(String containerId) {
+
+    protected PortableDeviceObject[] getObjects(String containerID) {
         Map<String, String> objects;
-        objects = device.getObjectsN(containerId);
+        objects = device.getObjectsN(containerID);
         PortableDeviceObject[] returnObjects = new PortableDeviceObject[objects.size()];
         int i = 0;
         for (String id : objects.keySet()) {
@@ -78,6 +88,19 @@ class PortableDeviceContentWin32 {
         return returnObjects;
     }
 
+    /**
+     * Returns names and id's without initializing any objects
+     * @param containerID
+     */
+    protected Map<String, String> getObjectNames(String containerID) {
+        Map<String, String> objects;
+        objects = device.getObjectsN(containerID);
+        Map<String, String> returnNamesAndIDs = new HashMap<>();
+        for (String id : objects.keySet()) {
+            returnNamesAndIDs.put(device.getProperties(id).get(DeviceProperties.OBJECT_NAME).toString(), id);
+        }
+        return returnNamesAndIDs;
+    }
     protected void rename(String id, String newName) {
         device.updatePropertyN(id, PropertiesWin32.WPD_OBJECT_NAME.guid, PropertiesWin32.WPD_OBJECT_NAME.pid, VarType.STRING.value, newName);
         device.updatePropertyN(id, PropertiesWin32.WPD_OBJECT_ORIGINAL_FILE_NAME.guid, PropertiesWin32.WPD_OBJECT_ORIGINAL_FILE_NAME.pid, VarType.STRING.value, newName);
@@ -151,7 +174,17 @@ class PortableDeviceContentWin32 {
 
         return Files.probeContentType(file.toPath());
     }
+    protected static Map<String, DeviceProperties.PropertyValue> convertNativePropertiesToJava(Map<String, Object> objects) {
+        Map<String, DeviceProperties.PropertyValue> ret = new HashMap<>();
+        for (int i = 0; i < objects.size(); i++) {
+            String key = new ArrayList<>(objects.keySet()).get(i);
+            Object obj = objects.get(key);
+            ret.put(key, new DeviceProperties.PropertyValue(obj.getClass(), key, obj));
+        }
+        return ret;
+         }
     }
+
 
  enum VarType {
     STRING(31),

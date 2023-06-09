@@ -22,3 +22,5 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_Mtp_registerJNI
 void handleException(const char* type, const char* name, HRESULT hr);
 // Converts Unsinged Long to Java BigInterger (Note to Self: since Java 8 added support for unsigned longs Long#parseUnsignedLong)
 jobject ConvertUnsignedLongLongToJava(JNIEnv* env, ULONGLONG number);
+
+jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPortableDeviceValues* values);

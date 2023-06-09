@@ -2,13 +2,13 @@ package com.github.hms11rn.mtp.win32;
 
 import com.github.hms11rn.mtp.DeviceProperties;
 import com.github.hms11rn.mtp.PortableDevice;
+import com.github.hms11rn.mtp.content.PortableDeviceContainerObject;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Pattern;
 
 class PortableDeviceWin32 implements PortableDevice {
     private final String deviceID;
@@ -36,7 +36,7 @@ class PortableDeviceWin32 implements PortableDevice {
     private static native String getFriendlyName(String deviceID);
     private static native String getManufacturer(String deviceID);
     private static native String getDescription(String deviceID);
-    private static native Map<String, Object> getProperties(String deviceID);
+    protected native Map<String, Object> getProperties(String objectID);
 
 
     @Override
@@ -46,10 +46,9 @@ class PortableDeviceWin32 implements PortableDevice {
 
     @Override
     public void reloadProperties() {
-        nativeProperties = getProperties(deviceID);
+        nativeProperties = getProperties("DEVICE");
         if (nativeProperties == null) {
             System.err.println("Native Properties are Null");
-
         }
 
         Map<String, DeviceProperties.PropertyValue> ret = new HashMap<>();
@@ -148,7 +147,7 @@ class PortableDeviceWin32 implements PortableDevice {
 
     @Override
     public PortableDeviceObject[] getRootObjects() {
-        Map<String, String> objectsMap = getObjectsN("DEVICE");
+        Map<String, String> objectsMap = getObjectsN("DEVICE"); // Root ID is 'DEVICE'
         PortableDeviceObject[] objects = new PortableDeviceObject[objectsMap.size()];
         int i = 0;
         for (String id : objectsMap.keySet()) {
@@ -156,6 +155,48 @@ class PortableDeviceWin32 implements PortableDevice {
             i++;
         }
         return objects;
+    }
+
+    @Override
+    public PortableDeviceObject getObjectByID(String id) {
+        return content.getObjectFromID(id, null);
+    }
+
+    @Override
+    public PortableDeviceObject getObject(String namePath) {
+        namePath = namePath.replace("\\", "/"); // Reassigning parameter since it's only for constituency
+        String[] objects = namePath.split(Pattern.quote("/"));
+        // Recursive reading
+        PortableDeviceObject[] rootObjects = getRootObjects(); // Root Objects first
+        PortableDeviceContainerObject nextObject = null;
+        for (PortableDeviceObject p : rootObjects) {
+            if (p.getName().equalsIgnoreCase(objects[0])) {
+                if (!(p instanceof PortableDeviceContainerObject))
+                    throw new IllegalArgumentException("Path contains object that is not a container object");
+                nextObject = (PortableDeviceContainerObject) p;
+                if (objects.length == 1)
+                    return nextObject;
+            }
+        }
+        if (nextObject == null)
+            return null; // TODO handle exception
+        for (int i = 1; i < objects.length; i++) {
+            if (!nextObject.contains(objects[i]))
+                throw new RuntimeException("place holder"); // TODO handle exception
+            Map<String, String> idsAndNames = nextObject.getChildNames();
+            Map<String,String> treeIDsAndNames = new TreeMap(String.CASE_INSENSITIVE_ORDER);
+            treeIDsAndNames.putAll(idsAndNames);
+            if (i == objects.length - 1) {
+                PortableDeviceObject pObj = content.getObjectFromID(treeIDsAndNames.get(objects[i]), null); // Return before exception gets thrown
+                return pObj;
+            }
+            try {
+                nextObject = new PortableDeviceContainerObjectWin32(treeIDsAndNames.get(objects[i]), content);
+            } catch (IllegalStateException e) {
+                throw new IllegalArgumentException("Path contains object that is not a container object");
+            }
+        }
+        return null;
     }
 
     @Override
@@ -185,6 +226,7 @@ class PortableDeviceWin32 implements PortableDevice {
             return null;
         return p.getStringValue();
     }
+
 
 
 }

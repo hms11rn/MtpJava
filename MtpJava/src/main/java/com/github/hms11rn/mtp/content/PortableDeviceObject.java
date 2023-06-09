@@ -5,6 +5,7 @@ import com.github.hms11rn.mtp.PortableDevice;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Date;
 import java.util.Map;
@@ -16,7 +17,7 @@ import java.util.Map;
  * Folder Or Storage Objects can be found in {@link PortableDeviceContainerObject}
  */
 @SuppressWarnings("unused")
-public interface PortableDeviceObject {
+public interface PortableDeviceObject extends Serializable {
 
     PortableDevice getDevice();
 
@@ -88,7 +89,7 @@ public interface PortableDeviceObject {
       String getSyncID();
 
       String getFormat();
-      String getContentType();
+    ObjectContentType getContentType();
       Map<String, DeviceProperties.PropertyValue> getProperties();
       void reloadProperties();
 
@@ -113,4 +114,17 @@ public interface PortableDeviceObject {
       OutputStream getOutputStream();
 
  OutputStream getOutputStream(int initialCapacity);
+
+ enum ObjectContentType {
+     IMAGE,
+     VIDEO,
+     AUDIO,
+     DOCUMENT,
+     GENERIC_FILE,
+     GENERIC_CONTAINER,
+     FOLDER,
+     STORAGE,
+
+
+ }
 }

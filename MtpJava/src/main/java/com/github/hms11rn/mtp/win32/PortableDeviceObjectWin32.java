@@ -5,9 +5,6 @@ import com.github.hms11rn.mtp.PortableDevice;
 import com.github.hms11rn.mtp.content.PortableDeviceContainerObject;
 import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
-
-import static com.github.hms11rn.mtp.win32.PropertiesWin32.*;
-
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -17,7 +14,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static com.github.hms11rn.mtp.win32.PropertiesWin32.*;
+
 class PortableDeviceObjectWin32 implements PortableDeviceObject {
+
 
     Map<String, DeviceProperties.PropertyValue> properties;
     final String id;
@@ -25,11 +25,19 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
     /**
      * Used to convert c++ string date to {@link java.util.Date}
      */
-    final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd:HH:mm:sss", Locale.ENGLISH);
+    static final DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd:HH:mm:sss", Locale.ENGLISH);
     protected PortableDeviceObjectWin32(String id, PortableDeviceContentWin32 content) {
         this.id = id;
         this.content = content;
         loadProperties();
+        if (isContainer() && !(this instanceof PortableDeviceContainerObject)) {
+            System.out.println("Warning: PortableDeviceObject was created even though its a container object, Object Name: " + getName());
+        }
+    }
+
+    @Override
+    public boolean isContainer() {
+        return isContainerN(id);
     }
 
     /**
@@ -38,7 +46,7 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
      * @return map of Strings and PropertyValue
      */
     public static native Map<String, Object> getPropertiesN(String id);
-
+    private native boolean isContainerN(String id);
     @Override
     public PortableDevice getDevice() {
 
@@ -194,11 +202,25 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
     }
 
     @Override
-    public String getContentType() {
+    public ObjectContentType getContentType() {
         DeviceProperties.PropertyValue ret = properties.get(WPD_OBJECT_CONTENT_TYPE.toString());
         if (ret == null)
             return null;
-        return ret.getStringValue();
+        ObjectContentType type = isContainer() ? ObjectContentType.GENERIC_CONTAINER : ObjectContentType.GENERIC_FILE;
+
+        String typeDef = ret.getStringValue();
+        if (typeDef.equals(WPD_CONTENT_TYPE_AUDIO.toString()))
+            return ObjectContentType.AUDIO;
+        if (typeDef.equals(WPD_CONTENT_TYPE_DOCUMENT.toString()))
+            return ObjectContentType.DOCUMENT;
+        if (typeDef.equals(WPD_CONTENT_TYPE_FOLDER.toString()))
+            return ObjectContentType.FOLDER;
+        if (typeDef.equals(WPD_CONTENT_TYPE_VIDEO.toString()))
+            return ObjectContentType.VIDEO;
+        if (typeDef.equals(WPD_CONTENT_TYPE_IMAGE.toString()))
+            return ObjectContentType.IMAGE;
+
+        return type;
     }
 
     @Override

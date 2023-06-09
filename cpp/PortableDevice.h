@@ -4,6 +4,7 @@
 IPortableDeviceProperties* getPDProperties();
 
 IPortableDevicePropVariantCollection* getPropVariantCollection();
+IPortableDeviceKeyCollection* getKeyCollection();
 
 
 /// portable device values
@@ -18,7 +19,7 @@ jstring getFriendlyName(JNIEnv* env, jstring deviceID);
 
 HRESULT OpenDevice(LPCWSTR wszPnPDeviceID, IPortableDevice** ppDevice, LPCWSTR, int, int, int);
 
-jobject GetKeyAndValuesMap(JNIEnv*, IPortableDeviceKeyCollection*, IPortableDeviceValues*);
+// jobject GetKeyAndValuesMap(JNIEnv*, IPortableDeviceKeyCollection*, IPortableDeviceValues*);
 
 /* Header for class com_github_hms11rn_mtp_win32_PortableDeviceWin32 */
 
@@ -68,7 +69,7 @@ extern "C" {
 	/// Object Methods
 	
 	JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getProperties
-	(JNIEnv*, jclass, jstring objID);
+	(JNIEnv*, jclass, jstring objectID);
 
 	JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getObjectsN
 	(JNIEnv*, jobject, jstring objID);

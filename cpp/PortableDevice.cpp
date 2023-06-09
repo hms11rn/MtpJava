@@ -20,11 +20,25 @@ IPortableDeviceProperties* pProperties;
 BOOL isOpen = false;
 IPortableDevice* pPortableDevice;
 IPortableDeviceValues* pClientValues;
+IPortableDeviceKeyCollection* pKeyCollection;
 IPortableDevicePropVariantCollection* propVariantCollections = nullptr;
 //
 PortableDeviceContentJ* content;
 IPortableDeviceService* pService; // future
 IPortableDeviceContent2* pContent2; // future
+
+
+IPortableDeviceKeyCollection* getKeyCollection() {
+    HRESULT hr;
+    if (pKeyCollection == nullptr) {
+        hr = CoCreateInstance
+        (CLSID_PortableDeviceKeyCollection, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pKeyCollection));
+        if (FAILED(hr)) {
+            handleException("COM", "Failed to create IPortableDeviceServer", hr);
+        }
+    }
+    return pKeyCollection;
+}
 
 IPortableDeviceService* getService() {
     HRESULT hr;
@@ -101,14 +115,6 @@ IPortableDeviceValues* getPortableDeviceValues()
     }
     pClientValues->Clear();
     return pClientValues;
-}
-
-void releasePortableDeviceValues() {
-    if (pClientValues != nullptr)
-    {
-        pClientValues->Release();
-        pClientValues = nullptr;
-    }
 }
 
 IPortableDevice* getPortableDevice()
@@ -191,7 +197,7 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     wszDeviceID = (WCHAR*)env->GetStringChars(deviceID, nullptr);
 
     pDeviceManager->GetDeviceDescription(wszDeviceID, nullptr, &length);
-    wszDeviceDescription = new WCHAR[length + 1];
+    wszDeviceDescription = new WCHAR[length];
     hr = pDeviceManager->GetDeviceDescription(wszDeviceID, wszDeviceDescription, &length);
 
     description = env->NewString((jchar*)wszDeviceDescription, length);
@@ -204,25 +210,25 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
 }
 
 JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getProperties
-(JNIEnv* env, jclass, jstring deviceID) {
+(JNIEnv* env, jclass, jstring objectID) {
+
+    HRESULT hr;
 
     IPortableDeviceContent* pContent;
-    LPWSTR wszDeviceID;
-    HRESULT hr;
     IPortableDevice* pDevice;
 
-    wszDeviceID = (WCHAR*)env->GetStringChars(deviceID, nullptr);
+    LPWSTR wsObjectID;
+
+    wsObjectID = (WCHAR*) env->GetStringChars(objectID, nullptr);
     pDevice = getPortableDevice();
 
-    
-   
     pContent = content->getContent();
 
     if (pProperties != nullptr) {
         pProperties->Release();
         pProperties = nullptr;
     }
-  
+    
     hr = pContent->Properties(&pProperties);
     if (FAILED(hr)) {
         if (FAILED(hr)) {
@@ -238,131 +244,24 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     }
 
     IPortableDeviceKeyCollection* deviceKeys{};
-    hr = pProperties->GetSupportedProperties(WPD_DEVICE_OBJECT_ID, &deviceKeys);
+    hr = pProperties->GetSupportedProperties(wsObjectID, &deviceKeys);
     if (FAILED(hr)) {
         cout << "Failed to get supported properties of the device, hr = " << std::hex << hr << endl;
     }
     IPortableDeviceValues* deviceValues{};
-    hr = pProperties->GetValues(WPD_DEVICE_OBJECT_ID, deviceKeys, &deviceValues);
+    hr = pProperties->GetValues(wsObjectID, deviceKeys, &deviceValues);
     if (FAILED(hr)) {
         cout << "Failed to get device Property Values, hr = " << std::hex << hr << endl;
         pProperties->Release();
         return nullptr;
     }
+    env->ReleaseStringChars(objectID, (jchar*)wsObjectID);
     jobject map = GetKeyAndValuesMap(env, deviceKeys, deviceValues);
     deviceKeys->Release();
     deviceValues->Release();
     return map;
 }
 
-jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPortableDeviceValues* values) {
-    jclass mapClass = env->FindClass("java/util/HashMap");
-    if (mapClass == nullptr) 
-        return nullptr;
-
-    jmethodID init = env->GetMethodID(mapClass, "<init>", "()V");
-    jobject hashMap = env->NewObject(mapClass, init);
-    jmethodID put = env->GetMethodID(mapClass, "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
-
-    DWORD size = 0;
-
-    HRESULT hr = keys->GetCount(&size);
-
-    for (DWORD i = 0; i < size; i++) {
-        PROPERTYKEY keyName;
-        LPWSTR pszName;
-        DWORD pszId;
-        hr = keys->GetAt(i, &keyName);
-   
-        hr = StringFromCLSID(keyName.fmtid, &pszName);
-        pszId = keyName.pid;
-        // fill value
-        wstring s = pszName;
-        s.append(to_wstring(pszId));
-
-        // key for java return value: format {guid}pid
-        jstring keyJava = env->NewString((jchar*)s.c_str(), wcslen(s.c_str()));
-
-        CoTaskMemFree(pszName); // pszName is no longer needed, free memory
-        s.clear(); // s is no longer need as java key was created
-
-        PROPVARIANT valueAt; // value of key
-        hr = values->GetValue(keyName, &valueAt);
-        VARTYPE valueType = valueAt.vt;
-        switch (valueType) {
-        case VT_LPWSTR: {
-            LPWSTR valueAtStr = nullptr;
-            values->GetStringValue(keyName, &valueAtStr);
-            jstring singleValueJava = env->NewString((jchar*)valueAtStr, wcslen(valueAtStr));
-            // free memory
-            CoTaskMemFree(valueAtStr);
-            env->CallObjectMethod(hashMap, put, keyJava, singleValueJava);
-            env->DeleteLocalRef(singleValueJava);
-            env->DeleteLocalRef(keyJava);
-            break;
-        }
-        case VT_BOOL: {
-            BOOL valueAtBool;
-            values->GetBoolValue(keyName, &valueAtBool);
-            jclass boolClass = env->FindClass("java/lang/Boolean");
-            jmethodID initBool = env->GetMethodID(boolClass, "<init>", "(Z)V");
-            jobject boolObject = env->NewObject(boolClass, initBool, valueAtBool);
-            // free memory
-            env->CallObjectMethod(hashMap, put, keyJava, boolObject);
-            env->DeleteLocalRef(boolObject);
-            env->DeleteLocalRef(keyJava);
-            break;
-        }
-        case VT_UI4: {
-            ULONG valueAtInt;
-            values->GetUnsignedIntegerValue(keyName, &valueAtInt);
-            jclass intClass = env->FindClass("java/lang/Integer");
-            jmethodID initInt = env->GetMethodID(intClass, "<init>", "(I)V");
-            jobject intObject = env->NewObject(intClass, initInt, valueAtInt);
-            // free memory
-            env->CallObjectMethod(hashMap, put, keyJava, intObject);
-            env->DeleteLocalRef(intObject);
-            env->DeleteLocalRef(keyJava);
-            break;
-        }
-        case VT_UI8: {
-            ULONGLONG valueAtInt;
-            values->GetUnsignedLargeIntegerValue(keyName, &valueAtInt);
-            jobject longJava = ConvertUnsignedLongLongToJava(env, valueAtInt);
-            env->CallObjectMethod(hashMap, put, keyJava, longJava);
-            // free memory
-            env->DeleteLocalRef(longJava);
-            env->DeleteLocalRef(keyJava);
-            break;
-        }
-        case VT_CLSID: {
-            LPWSTR valueAtCLSID = nullptr;
-            values->GetStringValue(keyName, &valueAtCLSID);
-            jstring singleValueJavaCLSID = env->NewString((jchar*)valueAtCLSID, wcslen(valueAtCLSID));
-            // free memory
-            CoTaskMemFree(valueAtCLSID);
-            env->CallObjectMethod(hashMap, put, keyJava, singleValueJavaCLSID);
-            env->DeleteLocalRef(singleValueJavaCLSID);
-            env->DeleteLocalRef(keyJava);
-            break;
-        }
-        case VT_DATE: {
-            LPWSTR valueAtDate;
-            values->GetStringValue(keyName, &valueAtDate);
-            jstring singleValueJava = env->NewString((jchar*)valueAtDate, wcslen(valueAtDate));
-            // free memory
-            CoTaskMemFree(valueAtDate);
-            env->CallObjectMethod(hashMap, put, keyJava, singleValueJava);
-            env->DeleteLocalRef(singleValueJava);
-            env->DeleteLocalRef(keyJava);
-            break;
-            }
-       }
-      
-    }
-    env->DeleteLocalRef(mapClass);
-    return hashMap;
-}
 
 HRESULT OpenDevice(LPCWSTR wszPnPDeviceID, IPortableDevice** ppDevice, LPCWSTR clientName, int majorV, int minorV, int clientRevision)
 {
@@ -510,6 +409,16 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_clo
         pContent2->Release();
         pContent2 = nullptr;
     }
+    if (pClientValues != nullptr)
+    {
+        pClientValues->Release();
+        pClientValues = nullptr;
+    }
+    if (pKeyCollection != nullptr) {
+        pKeyCollection->Release();
+        pKeyCollection = nullptr;
+    }
+   
     isOpen = false;
     env->ReleaseStringChars(jsDeviceID, (jchar*)wszDeviceID);
 }

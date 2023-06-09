@@ -34,6 +34,18 @@ IPortableDeviceKeyCollection* PortableDeviceContentJ::getContentTypeKey() {
 	return contentTypeKey;
 }
 
+
+IPortableDeviceValues* getPortableDeviceValuesInstance() {
+	if (pCollection == nullptr) {
+		HRESULT hr = CoCreateInstance(CLSID_PortableDeviceValues, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pCollection));
+		if (FAILED(hr)) {
+			handleException("COM", "Failed to create IPortableDeviceValues", hr);
+		}
+	}
+	pCollection->Clear();
+	return pCollection;
+}
+
 // Release all resources used be this class
 void PortableDeviceContentJ::release() {
 	if (pContent != nullptr) 
@@ -155,17 +167,6 @@ jobject PortableDeviceContentJ::getObjects(JNIEnv* env, jobject cls, jstring par
 	env->ReleaseStringChars(parentID, (jchar*)objId);
 	pEnum->Release();
 	return hashMap;
-}
-
-IPortableDeviceValues* getPortableDeviceValuesInstance() {
-	if (pCollection == nullptr) {
-		HRESULT hr = CoCreateInstance(CLSID_PortableDeviceValues, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pCollection));
-		if (FAILED(hr)) {
-			handleException("COM", "Failed to create IPortableDeviceValues", hr);
-		}
-	}
-	pCollection->Clear();
-	return pCollection;
 }
 
 // Delete Object

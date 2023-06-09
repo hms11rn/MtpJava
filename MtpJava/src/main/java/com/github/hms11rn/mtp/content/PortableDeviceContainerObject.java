@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 
 /**
 
@@ -15,10 +16,14 @@ import java.io.OutputStream;
 public interface PortableDeviceContainerObject extends PortableDeviceObject {
 
 
+     boolean contains(String name);
      /**
       * @return an array of child {@link PortableDeviceObject}s.
       */
      PortableDeviceObject[] getChildObjects();
+
+
+     Map<String, String> getChildNames();
 
      /**
       * Adds a file object to this container object.

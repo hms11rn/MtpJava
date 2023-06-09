@@ -61,6 +61,8 @@ public interface PortableDevice {
      */
      PortableDeviceObject[] getRootObjects();
 
+     PortableDeviceObject getObjectByID(String id );
+     PortableDeviceObject getObject(String namePath);
     /**
      * Most Portable Devices don't support being written into them
      * @param rewrite Attempt to get OutputStream from Object or delete and rewrite
