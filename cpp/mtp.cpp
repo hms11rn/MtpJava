@@ -47,7 +47,7 @@ void handleException(const char* type, const char* msg, HRESULT hr)
 	}
 	else if (type == "COM") {
 		jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/ComException");
-		env->NewObject(deviceClosedException, env->GetMethodID(deviceClosedException, "<init>", "(Ljava/lang/String;)V"), env->NewStringUTF(oss.str().c_str()));
+		env->NewObject(deviceClosedException, env->GetMethodID(deviceClosedException, "<init>", "(Ljava/lang/String;I)V"), env->NewStringUTF(oss.str().c_str()), hr);
 	}
 }
 
