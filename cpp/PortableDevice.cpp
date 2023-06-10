@@ -216,43 +216,32 @@ JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
 
     IPortableDeviceContent* pContent;
     IPortableDevice* pDevice;
-
     LPWSTR wsObjectID;
-
     wsObjectID = (WCHAR*) env->GetStringChars(objectID, nullptr);
     pDevice = getPortableDevice();
-
     pContent = content->getContent();
-
-    if (pProperties != nullptr) {
-        pProperties->Release();
-        pProperties = nullptr;
-    }
-    
     hr = pContent->Properties(&pProperties);
     if (FAILED(hr)) {
-        if (FAILED(hr)) {
-            if (hr == E_WPD_DEVICE_NOT_OPEN || hr == E_POINTER) {
-                jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/DeviceClosedException");
-                string devIdChar = env->GetStringUTFChars(getFriendlyName(env, deviceID), nullptr);
-                env->ThrowNew(deviceClosedException, devIdChar.append(" is not opened. use PortableDevice#open() to open").c_str());
-            }
+        if (hr == E_WPD_DEVICE_NOT_OPEN || hr == E_POINTER) {
+            jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/DeviceClosedException");
+            string devIdChar = env->GetStringUTFChars(getFriendlyName(env, deviceID), nullptr);
+            env->ThrowNew(deviceClosedException, devIdChar.append(" is not opened. use PortableDevice#open() to open").c_str());
+            
             return nullptr;
         }
         cout << "Failed to get device properties, hr = " << std::hex << hr << endl;
         return nullptr;
     }
-
     IPortableDeviceKeyCollection* deviceKeys{};
     hr = pProperties->GetSupportedProperties(wsObjectID, &deviceKeys);
     if (FAILED(hr)) {
         cout << "Failed to get supported properties of the device, hr = " << std::hex << hr << endl;
+        return nullptr;
     }
     IPortableDeviceValues* deviceValues{};
     hr = pProperties->GetValues(wsObjectID, deviceKeys, &deviceValues);
     if (FAILED(hr)) {
         cout << "Failed to get device Property Values, hr = " << std::hex << hr << endl;
-        pProperties->Release();
         return nullptr;
     }
     env->ReleaseStringChars(objectID, (jchar*)wsObjectID);
@@ -359,6 +348,7 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_ope
     if (FAILED(hr))
     {      
         handleException("DEVICE", "Failed to open Portable Device", hr);
+        return;
     }
     wcout << L"WPD: Opened Device: " << wszDeviceID << L" , Attempting to create and open Service" << endl;
     hr = pDevice->Content(&pContent);
@@ -370,24 +360,23 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_ope
         }
     }
     content = new PortableDeviceContentJ(pContent);
-    
+
     env->ReleaseStringChars(jsDeviceID, (jchar*)wszDeviceID);;
 }
 
 JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_closeN
 (JNIEnv* env, jobject obj) {
-    IPortableDevice* pDevice;
     LPWSTR wszDeviceID;
     jfieldID deviceIdField;
     jstring jsDeviceID;
 
-    pDevice = getPortableDevice();
     deviceIdField = env->GetFieldID(env->GetObjectClass(obj), "deviceID", "Ljava/lang/String;");
     jsDeviceID = (jstring)env->GetObjectField(obj, deviceIdField);
     wszDeviceID = (WCHAR*)env->GetStringChars(jsDeviceID, nullptr);
-    pDevice->Close();
-    pDevice->Release();
-    pDevice = nullptr;
+    pPortableDevice->Close();
+    pPortableDevice->Release();
+    pPortableDevice = nullptr;
+
     if (pClientValues != nullptr) {
         pClientValues->Release();
         pClientValues = nullptr;
@@ -418,7 +407,10 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_clo
         pKeyCollection->Release();
         pKeyCollection = nullptr;
     }
-   
+    if (pProperties != nullptr) {
+        pProperties->Release();
+        pProperties = nullptr;
+    }
     isOpen = false;
     env->ReleaseStringChars(jsDeviceID, (jchar*)wszDeviceID);
 }

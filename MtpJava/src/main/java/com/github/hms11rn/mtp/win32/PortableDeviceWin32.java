@@ -21,18 +21,8 @@ class PortableDeviceWin32 implements PortableDevice {
     PortableDeviceWin32(String deviceID) {
         this.deviceID = deviceID;
         this.content = new PortableDeviceContentWin32(this);
-        //   reloadProperties(); // load in properties
+        //   reloadProperties(); // Don't open device yet
     }
-    /**
-     * 0: name
-     * 1: manufacture
-     * 2:firmware version
-     * 3:serial number
-     * 4: power source
-     */
-
-
-
     private static native String getFriendlyName(String deviceID);
     private static native String getManufacturer(String deviceID);
     private static native String getDescription(String deviceID);
@@ -46,7 +36,7 @@ class PortableDeviceWin32 implements PortableDevice {
 
     @Override
     public void reloadProperties() {
-        nativeProperties = getProperties("DEVICE");
+        nativeProperties = getProperties(DeviceProperties.DEVICE_ROOT_ID);
         if (nativeProperties == null) {
             System.err.println("Native Properties are Null");
         }
@@ -73,7 +63,6 @@ class PortableDeviceWin32 implements PortableDevice {
 
     @Override
     public String getDescription() {
-
         return getDescription(deviceID);
     }
 
@@ -120,7 +109,7 @@ class PortableDeviceWin32 implements PortableDevice {
     @Override
     public void open() {
         openN();
-        reloadProperties();
+      //  reloadProperties();
     }
 
     @Override
@@ -143,7 +132,7 @@ class PortableDeviceWin32 implements PortableDevice {
 
     @Override
     public PortableDeviceObject[] getRootObjects() {
-        Map<String, String> objectsMap = getObjectsN("DEVICE"); // Root ID is 'DEVICE'
+        Map<String, String> objectsMap = getObjectsN(DeviceProperties.DEVICE_ROOT_ID); // Root ID is 'DEVICE'
         PortableDeviceObject[] objects = new PortableDeviceObject[objectsMap.size()];
         int i = 0;
         for (String id : objectsMap.keySet()) {

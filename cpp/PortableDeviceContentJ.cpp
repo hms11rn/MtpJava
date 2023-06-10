@@ -73,13 +73,6 @@ IPortableDevicePropVariantCollection* PortableDeviceContentJ::getPropCollection(
 PortableDeviceContentJ::PortableDeviceContentJ(IPortableDeviceContent* content)
 {	
 	pContent = content;
-	if (ppProperties == nullptr) {
-
-		HRESULT hr = content->Properties(&ppProperties);
-		if (FAILED(hr)) {
-			handleException("DEVICE", "Failed to get object properties", hr);
-		}
-	}
 }
 
 IPortableDeviceContent* PortableDeviceContentJ::getContent() {
@@ -132,9 +125,10 @@ jobject PortableDeviceContentJ::getObjects(JNIEnv* env, jobject cls, jstring par
 
 	while (SUCCEEDED(pEnum->Next(1, &szObjectID, &dwFetched)) && (dwFetched > 0)) {
 		IPortableDeviceValues* contentTypeValue;
+		IPortableDeviceProperties* pProperties = getPDProperties();
 		GUID contentType;
 
-		ppProperties->GetValues(szObjectID, getContentTypeKey(), &contentTypeValue);
+		pProperties->GetValues(szObjectID, getContentTypeKey(), &contentTypeValue);
 		contentTypeValue->GetGuidValue(WPD_OBJECT_CONTENT_TYPE, &contentType);
 		contentTypeJava = env->NewStringUTF("UNKNOWN");
 		if (contentType == WPD_CONTENT_TYPE_FOLDER) {
@@ -190,7 +184,6 @@ BOOL PortableDeviceContentJ::deleteFile(LPWSTR idd, int recursion)
 }
 
 void PortableDeviceContentJ::updateProperty(JNIEnv* env, LPWSTR id, GUID category, DWORD pid, int vt, LPWSTR value) {
-	IPortableDeviceProperties* pProperties;
 	IPortableDeviceValues* pValues;
 	IPortableDeviceValues* outValues;
 	PROPERTYKEY prop;
@@ -220,9 +213,8 @@ void PortableDeviceContentJ::updateProperty(JNIEnv* env, LPWSTR id, GUID categor
 		break;
 
 	}
-	pContent->Properties(&pProperties);
-	pProperties->SetValues(id, pValues, &outValues);
-	pProperties->Release();
+	getPDProperties()->SetValues(id, pValues, &outValues); // TODO test if still works
+
 
 }
 
@@ -517,17 +509,22 @@ DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, D
 	if (rewrite == 3) {
 		IPortableDeviceKeyCollection* pKeyCol;
 		IPortableDeviceValues* pValues;
-		hr = ppProperties->GetSupportedProperties(id, &pKeyCol);
-		hr = ppProperties->GetValues(id, pKeyCol, &pValues);
+		IPortableDeviceProperties* pProperties = getPDProperties();
+
+		hr = pProperties->GetSupportedProperties(id, &pKeyCol);
+		hr = pProperties->GetValues(id, pKeyCol, &pValues);
 		pValues->SetUnsignedIntegerValue(WPD_OBJECT_SIZE, dwBufferSize);
 
 	}
 
 	if (rewrite == 1) {
+
+		IPortableDeviceProperties* pProperties = getPDProperties();
+
 		IPortableDeviceKeyCollection* pKeyCol;
 		IPortableDeviceValues* pValues;
-		ppProperties->GetSupportedProperties(id, &pKeyCol);
-		ppProperties->GetValues(id, pKeyCol, &pValues);
+		pProperties->GetSupportedProperties(id, &pKeyCol);
+		pProperties->GetValues(id, pKeyCol, &pValues);
 		pValues->SetUnsignedIntegerValue(WPD_OBJECT_SIZE, dwBufferSize);
 		deleteFile(id, PORTABLE_DEVICE_DELETE_NO_RECURSION);
 		hr = pContent->CreateObjectWithPropertiesAndData(pValues, &pDeviceStream, &dwOptimalBufferSize, nullptr);
