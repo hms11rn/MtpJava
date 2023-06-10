@@ -45,7 +45,6 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
      * @param id device id
      * @return map of Strings and PropertyValue
      */
-    public static native Map<String, Object> getPropertiesN(String id);
     private native boolean isContainerN(String id);
     @Override
     public PortableDevice getDevice() {
@@ -59,7 +58,8 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
 
     @Override
     public void reloadProperties() {
-        Map<String, Object> nativeProperties = getPropertiesN(id);
+        PortableDeviceWin32 deviceWin32 = (PortableDeviceWin32) getDevice();
+        Map<String, Object> nativeProperties = deviceWin32.getProperties(id);
         Map <String, DeviceProperties.PropertyValue> ret = new HashMap<>();
 
         for (int i = 0; i < nativeProperties.size(); i++) {

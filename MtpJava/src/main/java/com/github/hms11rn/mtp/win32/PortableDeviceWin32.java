@@ -51,12 +51,8 @@ class PortableDeviceWin32 implements PortableDevice {
             System.err.println("Native Properties are Null");
         }
 
-        Map<String, DeviceProperties.PropertyValue> ret = new HashMap<>();
-        for (int i = 0; i < nativeProperties.size(); i++) {
-            String key = new ArrayList<>(nativeProperties.keySet()).get(i);
-            Object obj = nativeProperties.get(key);
-            ret.put(key, new DeviceProperties.PropertyValue(obj.getClass(), key, obj));
-        }
+        Map<String, DeviceProperties.PropertyValue> ret;
+        ret = PortableDeviceContentWin32.convertNativePropertiesToJava(nativeProperties);
         this.properties = ret;
     }
 
