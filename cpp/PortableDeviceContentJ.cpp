@@ -48,17 +48,31 @@ IPortableDeviceValues* getPortableDeviceValuesInstance() {
 
 // Release all resources used be this class
 void PortableDeviceContentJ::release() {
-	if (pContent != nullptr) 
+	if (pContent != nullptr) {
 		pContent->Release();
-	
-	if (pCollection != nullptr) 
-		pCollection->Release();
-	
-	if (propColl != nullptr)
-		propColl->Release();
+		pContent = nullptr;
+	}
 
-	if (contentTypeKey != nullptr)
+	if (pCollection != nullptr) {
+		pCollection->Release();
+		pCollection = nullptr;
+	}
+
+	if (propColl != nullptr) {
+		propColl->Release();
+		propColl = nullptr;
+	}
+
+	if (contentTypeKey != nullptr) {
 		contentTypeKey->Release();
+		contentTypeKey = nullptr;
+	}
+
+	if (pContent2J != nullptr) {
+		pContent2J->Release();
+		pContent2J = nullptr;
+	}
+	
 }
 
 IPortableDevicePropVariantCollection* PortableDeviceContentJ::getPropCollection() {
@@ -67,6 +81,7 @@ IPortableDevicePropVariantCollection* PortableDeviceContentJ::getPropCollection(
 		(CLSID_PortableDevicePropVariantCollection, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&propColl));
 	}
 	propColl->Clear();
+
 	return propColl;
 }
 
@@ -84,9 +99,10 @@ jobject PortableDeviceContentJ::getObjects(JNIEnv* env, jobject cls, jstring par
 
 	HRESULT hr;
 	LPWSTR objId; // object id
+	LPWSTR wszDeviceID; // wide string device id
+
 	jfieldID deviceIDField; // device field
 	jstring jdeviceID; // device id string
-	LPWSTR wszDeviceID; // wide string device id
 	// portable device object stuff
 	IPortableDevice* pDevice;
 	IEnumPortableDeviceObjectIDs* pEnum = nullptr;
@@ -178,14 +194,18 @@ BOOL PortableDeviceContentJ::deleteFile(LPWSTR idd, int recursion)
 	coll->Add(&del);
 	pContent->Delete(recursion, coll, &result);
 	PROPVARIANT resultPropVariant;
-	result->GetAt(0, &resultPropVariant);
+
+	result->GetAt(0, &resultPropVariant); // Index 0 is an SCODE
+
 	SCODE resultSCODE = resultPropVariant.scode;
 	return resultSCODE == S_OK;
 }
 
 void PortableDeviceContentJ::updateProperty(JNIEnv* env, LPWSTR id, GUID category, DWORD pid, int vt, LPWSTR value) {
+
 	IPortableDeviceValues* pValues;
 	IPortableDeviceValues* outValues;
+
 	PROPERTYKEY prop;
 	prop.fmtid = category;
 	prop.pid = pid;
@@ -210,12 +230,13 @@ void PortableDeviceContentJ::updateProperty(JNIEnv* env, LPWSTR id, GUID categor
 		GUID g;
 		CLSIDFromString(value, &g);
 		pValues->SetGuidValue(prop, g);
+		
 		break;
 
 	}
 	getPDProperties()->SetValues(id, pValues, &outValues); // TODO test if still works
-
-
+	// pValues is a global object, do not release
+	outValues->Release();
 }
 
 jstring PortableDeviceContentJ::addObjectFromFile(JNIEnv* env, LPWSTR parent, jstring javaName, jobject javaFile, jstring contentType, jstring contentFormat, HRESULT* result)
@@ -431,17 +452,18 @@ void PortableDeviceContentJ::copyObjectToFile(JNIEnv* env, LPWSTR id, LPWSTR out
 	if (FAILED(hr)) {
 		return;
 	}
-	fflush(stdout); // memory
 	}
-	
 
 }
 
 BYTE* PortableDeviceContentJ::getBytes(JNIEnv* env, LPWSTR id, DWORD* size) {
+
 	HRESULT hr;
+
 	CComPtr<IStream> pObjectStream;
-	DWORD optimalBufferSize = 0;
 	IPortableDeviceResources* pResources;
+
+	DWORD optimalBufferSize = 0;
 
 	hr = pContent->Transfer(&pResources);
 	if (FAILED(hr)) {
@@ -457,13 +479,13 @@ BYTE* PortableDeviceContentJ::getBytes(JNIEnv* env, LPWSTR id, DWORD* size) {
 	}
 	BYTE* pObjectData = new (std::nothrow) BYTE[optimalBufferSize];
 	
-	if (pObjectData != NULL)
+	if (pObjectData != nullptr)
 	{
 		DWORD cbBytesRead = 0;
 		BOOL flag = false;
 		do {
 		hr = pObjectStream->Read(pObjectData, optimalBufferSize, &cbBytesRead);
-		if (!flag) { // Original amount of bytes to read
+		if (!flag) { // Original count of bytes to read
 			*size = cbBytesRead;
 			flag = true;
 		}
