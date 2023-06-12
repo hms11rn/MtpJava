@@ -10,12 +10,18 @@ import java.util.Map;
 
 @SuppressWarnings("all") // Suppressing all warnings since this is a test class
 // TODO write proper tests
-public class Test implements  Serializable{
+public class Test implements Serializable {
 
     @org.junit.jupiter.api.Test
     static void test() throws IOException {
         PortableDeviceManager mgr = PortableDeviceManager.getDeviceManager();
         PortableDevice pd = mgr.getDevices()[0];
+        if (true)
+            return;
+
+        new TestGui();
+
+
         System.out.println("Friendly name: " + pd.getFriendlyName());
         System.out.println("Manufacture: " + pd.getManufacture());
         System.out.println("Description: " + pd.getDescription());
@@ -26,8 +32,7 @@ public class Test implements  Serializable{
         PortableDeviceContainerObject obj = (PortableDeviceContainerObject) pd.getRootObjects()[0];
         PortableDeviceContainerObject j = (PortableDeviceContainerObject) obj.getChildObjects()[0];
         System.out.println(pd.getObject("Internal storage/music").getContentType());
-        if (true)
-            return;
+
         System.out.println(j.getName());
         Map<String, DeviceProperties.PropertyValue> m1 = j.getProperties();
         for (int i = 0; i < m1.size(); i++) {

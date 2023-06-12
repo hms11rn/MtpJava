@@ -7,6 +7,7 @@ import com.github.hms11rn.mtp.content.PortableDeviceObject;
 
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.InvalidPathException;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -73,33 +74,33 @@ class PortableDeviceWin32 implements PortableDevice {
 
     @Override
     public String getSerialNumber() {
-        return properties.get(PropertiesWin32.WPD_DEVICE_SERIAL_NUMBER.toString()).getStringValue();
+        return getProperties().get(PropertiesWin32.WPD_DEVICE_SERIAL_NUMBER.toString()).getStringValue();
     }
 
     @Override
     public String getProtocol() {
-        DeviceProperties.PropertyValue protocol = properties.get(PropertiesWin32.WPD_DEVICE_PROTOCOL.toString());
+        DeviceProperties.PropertyValue protocol = getProperties().get(PropertiesWin32.WPD_DEVICE_PROTOCOL.toString());
         return getNoNullValue(protocol);
     }
 
     @Override
     public String getSyncPartner() {
-        DeviceProperties.PropertyValue partner = properties.get(PropertiesWin32.WPD_DEVICE_SYNC_PARTNER.toString());
+        DeviceProperties.PropertyValue partner = getProperties().get(PropertiesWin32.WPD_DEVICE_SYNC_PARTNER.toString());
         return getNoNullValue(partner);
     }
 
     @Override
     public int getPowerLevel() {
-        DeviceProperties.PropertyValue powerL = properties.get(PropertiesWin32.WPD_DEVICE_POWER_LEVEL.toString());
+        DeviceProperties.PropertyValue powerL = getProperties().get(PropertiesWin32.WPD_DEVICE_POWER_LEVEL.toString());
         if (powerL == null)
             return -1;
-        return powerL.getValue(0); // 0 is just an indicator of object type, in this cade Integer
+        return powerL.getValue(0); // 0 is just an indicator of object type, in this case Integer
 
     }
 
     @Override
     public boolean IsNonConsumableSupported() {
-        DeviceProperties.PropertyValue supportsNonConsumable = properties.get(PropertiesWin32.WPD_DEVICE_SUPPORTS_NON_CONSUMABLE.toString());
+        DeviceProperties.PropertyValue supportsNonConsumable = getProperties().get(PropertiesWin32.WPD_DEVICE_SUPPORTS_NON_CONSUMABLE.toString());
         if (supportsNonConsumable == null)
             return false;
         return supportsNonConsumable.getValue(true);
@@ -152,22 +153,22 @@ class PortableDeviceWin32 implements PortableDevice {
         namePath = namePath.replace("\\", "/"); // Reassigning parameter since it's only for constituency
         String[] objects = namePath.split(Pattern.quote("/"));
         // Recursive reading
-        PortableDeviceObject[] rootObjects = getRootObjects(); // Root Objects first
+        PortableDeviceObject[] rootObjects = getRootObjects(); // Obtain root Objects first
         PortableDeviceContainerObject nextObject = null;
         for (PortableDeviceObject p : rootObjects) {
             if (p.getName().equalsIgnoreCase(objects[0])) {
+                if (objects.length == 1)
+                    return p;
                 if (!(p instanceof PortableDeviceContainerObject))
                     throw new IllegalArgumentException("Path contains object that is not a container object");
                 nextObject = (PortableDeviceContainerObject) p;
-                if (objects.length == 1)
-                    return nextObject;
             }
         }
         if (nextObject == null)
-            return null; // TODO handle exception
+            throw new InvalidPathException(namePath, "Failed to find first object in path");
         for (int i = 1; i < objects.length; i++) {
             if (!nextObject.contains(objects[i]))
-                throw new RuntimeException("place holder"); // TODO handle exception
+                throw new InvalidPathException(namePath, "Invalid Portable Device Path");
             Map<String, String> idsAndNames = nextObject.getChildNames();
             Map<String,String> treeIDsAndNames = new TreeMap(String.CASE_INSENSITIVE_ORDER);
             treeIDsAndNames.putAll(idsAndNames);
@@ -194,7 +195,6 @@ class PortableDeviceWin32 implements PortableDevice {
         return rewrite;
     }
 
-    // TODO figure out why Im using string value instead of int and fix (forgot)
     @Override
     public PowerSource getPowerSource() {
         int powerSource = properties.get(PropertiesWin32.WPD_DEVICE_POWER_SOURCE.toString()).getValue(0);
