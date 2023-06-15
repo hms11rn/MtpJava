@@ -5,6 +5,12 @@ plugins {
 group = "org.github.hms11rn"
 version = "1.0-SNAPSHOT"
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(8))
+    }
+}
+
 repositories {
     mavenCentral()
 }
