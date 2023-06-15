@@ -17,10 +17,6 @@ LPWSTR wsDeviceID;
 IPortableDevice* pPortableDevice;
 IPortableDeviceProperties* pProperties;
 
-<<<<<<< HEAD
-=======
-IPortableDevice* pPortableDevice;
->>>>>>> 87da53feb8bc799986ea8272e13acb7fe22c3b1c
 IPortableDeviceValues* pClientValues;
 IPortableDeviceKeyCollection* pKeyCollection;
 IPortableDevicePropVariantCollection* propVariantCollections;
