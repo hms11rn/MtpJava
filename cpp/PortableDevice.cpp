@@ -1,30 +1,29 @@
 #include "pch.h"
+#include "mtp.h"
 #include "PortableDevice.h"
+
 #include "PortableDeviceManager.h"
 #include "PortableDeviceContentJ.h"
-
 #include "PortableDeviceServiceManager.h"
-#include <PortableDeviceApi.h>
+
 #include <PortableDevice.h>
 #include <iostream>
-#include <string>
-#include "mtp.h"
 
 using namespace std;
 
 jstring deviceID;
 LPWSTR wsDeviceID;
 
+IPortableDevice* pPortableDevice;
 IPortableDeviceProperties* pProperties;
 
-IPortableDevice* pPortableDevice;
 IPortableDeviceValues* pClientValues;
 IPortableDeviceKeyCollection* pKeyCollection;
-IPortableDevicePropVariantCollection* propVariantCollections = nullptr;
-//
+IPortableDevicePropVariantCollection* propVariantCollections;
+IPortableDeviceService* pService;
+IPortableDeviceContent2* pContent2;
+
 PortableDeviceContentJ* content;
-IPortableDeviceService* pService; // future
-IPortableDeviceContent2* pContent2; // future
 
 
 IPortableDeviceKeyCollection* getKeyCollection() {
@@ -85,7 +84,7 @@ IPortableDeviceContent2* getContent2() {
     return pContent2;
 }
 
-IPortableDeviceProperties* getPDProperties() {
+IPortableDeviceProperties* getPortableDeviceProperties() {
 
     return pProperties;
 }

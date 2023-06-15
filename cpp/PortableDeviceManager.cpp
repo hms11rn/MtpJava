@@ -1,11 +1,11 @@
 #include "pch.h"
 #include "mtp.h"
-
 #include "PortableDeviceManager.h"
 
 IPortableDeviceManager* pDeviceManager;
 
 HRESULT cHr = S_OK;
+
 IPortableDeviceManager* getDeviceManager()
 {
     HRESULT hr = InitializeDeviceManager();
@@ -20,20 +20,21 @@ IPortableDeviceManager* getDeviceManager()
 
 HRESULT InitializeDeviceManager()
 {
-    CoInitialize(nullptr);
+    HRESULT hr;
+    hr = CoInitialize(nullptr);
+    if (FAILED(hr)) {
+        handleException("COM", "Failed to initalize the Com Interface", hr);
+        return hr;
+    }
     if (pDeviceManager == nullptr)
     {
-        HRESULT hr = CoCreateInstance(CLSID_PortableDeviceManager,
-            nullptr,
-            CLSCTX_INPROC_SERVER,
-            IID_PPV_ARGS(&pDeviceManager));
-
+        hr = CoCreateInstance(CLSID_PortableDeviceManager,
+            nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDeviceManager));
         if (FAILED(hr))
         {
             return hr;
         }
     }
-
     return S_OK;
 }
 

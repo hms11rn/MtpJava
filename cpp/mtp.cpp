@@ -1,10 +1,8 @@
 #include "pch.h"
-
 #include "mtp.h"
 
 #include <string>
 #include <iostream>
-#include "PortableDeviceManager.h"
 #include <sstream>
 using namespace std;
 

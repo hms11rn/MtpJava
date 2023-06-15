@@ -1,13 +1,12 @@
 #include "pch.h"
 #include "mtp.h"
 #include "PortableDeviceContentJ.h"
+
 #include "PortableDevice.h"
 
 #include <PortableDevice.h>
-#include <PortableDeviceApi.h>
 #include <jni.h>
 #include <iostream>
-#include <algorithm>
 #include <atlbase.h>
 
 using namespace std;
@@ -85,18 +84,19 @@ IPortableDevicePropVariantCollection* PortableDeviceContentJ::getPropCollection(
 	return propColl;
 }
 
+IPortableDeviceContent* PortableDeviceContentJ::getContent() {
+	return pContent;
+}
+
 PortableDeviceContentJ::PortableDeviceContentJ(IPortableDeviceContent* content)
 {	
 	pContent = content;
 }
 
-IPortableDeviceContent* PortableDeviceContentJ::getContent() {
-	return pContent;
-}
+
 
 jobject PortableDeviceContentJ::getObjects(JNIEnv* env, jobject cls, jstring parentID)
 {
-
 	HRESULT hr;
 	LPWSTR objId; // object id
 	LPWSTR wszDeviceID; // wide string device id
@@ -141,7 +141,7 @@ jobject PortableDeviceContentJ::getObjects(JNIEnv* env, jobject cls, jstring par
 
 	while (SUCCEEDED(pEnum->Next(1, &szObjectID, &dwFetched)) && (dwFetched > 0)) {
 		IPortableDeviceValues* contentTypeValue;
-		IPortableDeviceProperties* pProperties = getPDProperties();
+		IPortableDeviceProperties* pProperties = getPortableDeviceProperties();
 		GUID contentType;
 
 		pProperties->GetValues(szObjectID, getContentTypeKey(), &contentTypeValue);
@@ -195,7 +195,7 @@ BOOL PortableDeviceContentJ::deleteFile(LPWSTR idd, int recursion)
 	pContent->Delete(recursion, coll, &result);
 	PROPVARIANT resultPropVariant;
 
-	result->GetAt(0, &resultPropVariant); // Index 0 is an SCODE
+	result->GetAt(0, &resultPropVariant); // Index 0 is a SCODE
 
 	SCODE resultSCODE = resultPropVariant.scode;
 	return resultSCODE == S_OK;
@@ -228,13 +228,17 @@ void PortableDeviceContentJ::updateProperty(JNIEnv* env, LPWSTR id, GUID categor
 		break;
 	case VT_CLSID:
 		GUID g;
-		CLSIDFromString(value, &g);
+		HRESULT hr;
+		hr = CLSIDFromString(value, &g);
+		if (FAILED(hr)) {
+			env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "value is not a valid GUID");
+			break;
+		}
 		pValues->SetGuidValue(prop, g);
-		
 		break;
 
 	}
-	getPDProperties()->SetValues(id, pValues, &outValues); // TODO test if still works
+	getPortableDeviceProperties()->SetValues(id, pValues, &outValues); // TODO test if still works
 	// pValues is a global object, do not release
 	outValues->Release();
 }
@@ -268,6 +272,10 @@ jstring PortableDeviceContentJ::addObjectFromFile(JNIEnv* env, LPWSTR parent, js
 	GUID contentTypeGuid;
 	wszContentType = (WCHAR*)env->GetStringChars(contentType, nullptr);
 	hr = CLSIDFromString(wszContentType, &contentTypeGuid);
+	if (FAILED(hr)) {
+		env->ThrowNew(env->FindClass("java/lang/IllegalArgumentException"), "value is not a valid GUID");
+		return nullptr;
+	}
 	// Content Format
 	LPWSTR wszContentFormat;
 	GUID contentFormatGuid;
@@ -531,7 +539,7 @@ DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, D
 	if (rewrite == 3) {
 		IPortableDeviceKeyCollection* pKeyCol;
 		IPortableDeviceValues* pValues;
-		IPortableDeviceProperties* pProperties = getPDProperties();
+		IPortableDeviceProperties* pProperties = getPortableDeviceProperties();
 
 		hr = pProperties->GetSupportedProperties(id, &pKeyCol);
 		hr = pProperties->GetValues(id, pKeyCol, &pValues);
@@ -541,7 +549,7 @@ DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, D
 
 	if (rewrite == 1) {
 
-		IPortableDeviceProperties* pProperties = getPDProperties();
+		IPortableDeviceProperties* pProperties = getPortableDeviceProperties();
 
 		IPortableDeviceKeyCollection* pKeyCol;
 		IPortableDeviceValues* pValues;

@@ -1,17 +1,12 @@
 #include <jni.h>
 #include <PortableDeviceApi.h>
 
-IPortableDeviceProperties* getPDProperties();
+IPortableDevice* getPortableDevice();
+IPortableDeviceProperties* getPortableDeviceProperties();
 
 IPortableDevicePropVariantCollection* getPropVariantCollection();
 IPortableDeviceKeyCollection* getKeyCollection();
-
-
-/// portable device values
 IPortableDeviceValues* getPortableDeviceValues();
-void releasePortableDeviceValues();
-
-IPortableDevice* getPortableDevice();
 
 IPortableDeviceContent2* getContent2();
 
