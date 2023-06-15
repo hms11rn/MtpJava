@@ -80,13 +80,17 @@ class PortableDeviceWin32 implements PortableDevice {
     @Override
     public String getProtocol() {
         DeviceProperties.PropertyValue protocol = getProperties().get(PropertiesWin32.WPD_DEVICE_PROTOCOL.toString());
-        return getNoNullValue(protocol);
+        if (protocol == null)
+            return null;
+        return protocol.getStringValue();
     }
 
     @Override
     public String getSyncPartner() {
         DeviceProperties.PropertyValue partner = getProperties().get(PropertiesWin32.WPD_DEVICE_SYNC_PARTNER.toString());
-        return getNoNullValue(partner);
+        if (partner == null)
+            return null;
+        return partner.getStringValue();
     }
 
     @Override
@@ -149,8 +153,9 @@ class PortableDeviceWin32 implements PortableDevice {
     }
 
     @Override
-    public PortableDeviceObject getObject(String namePath) {
-        namePath = namePath.replace("\\", "/"); // Reassigning parameter since it's only for constituency
+    public PortableDeviceObject getObject(String path) {
+        String namePath;
+        namePath = path.replace("\\", "/"); // Reassigning parameter since it's only for constituency
         String[] objects = namePath.split(Pattern.quote("/"));
         // Recursive reading
         PortableDeviceObject[] rootObjects = getRootObjects(); // Obtain root Objects first
@@ -206,9 +211,4 @@ class PortableDeviceWin32 implements PortableDevice {
             return PowerSource.UNKNOWN;
     }
 
-    private static String getNoNullValue(DeviceProperties.PropertyValue p) {
-        if (p == null)
-            return null;
-        return p.getStringValue();
-    }
 }

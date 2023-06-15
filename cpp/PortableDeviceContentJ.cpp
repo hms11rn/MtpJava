@@ -195,7 +195,11 @@ BOOL PortableDeviceContentJ::deleteFile(LPWSTR idd, int recursion)
 	pContent->Delete(recursion, coll, &result);
 	PROPVARIANT resultPropVariant;
 
+<<<<<<< HEAD
 	result->GetAt(0, &resultPropVariant); // Index 0 is a SCODE
+=======
+	result->GetAt(0, &resultPropVariant); // Index 0 is an SCODE
+>>>>>>> 87da53feb8bc799986ea8272e13acb7fe22c3b1c
 
 	SCODE resultSCODE = resultPropVariant.scode;
 	return resultSCODE == S_OK;
@@ -235,10 +239,15 @@ void PortableDeviceContentJ::updateProperty(JNIEnv* env, LPWSTR id, GUID categor
 			break;
 		}
 		pValues->SetGuidValue(prop, g);
+		
 		break;
 
 	}
+<<<<<<< HEAD
 	getPortableDeviceProperties()->SetValues(id, pValues, &outValues); // TODO test if still works
+=======
+	getPDProperties()->SetValues(id, pValues, &outValues); // TODO test if still works
+>>>>>>> 87da53feb8bc799986ea8272e13acb7fe22c3b1c
 	// pValues is a global object, do not release
 	outValues->Release();
 }
