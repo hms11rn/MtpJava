@@ -30,7 +30,7 @@ class PortableDeviceContentJ
 		// Get Bytes of Object
 		BYTE* getBytes(JNIEnv* env, LPWSTR id, DWORD*);
 		// Write Bytes onto Object
-		DWORD writeBytes(JNIEnv*, LPWSTR id, BYTE* buffer, DWORD bufferSize, BOOL append, DWORD rewrite);
+		DWORD writeBytes(JNIEnv*, LPWSTR id, BYTE* buffer, DWORD bufferSize, BOOL append, DWORD rewrite, LPWSTR* newObjectID);
 
 
 };

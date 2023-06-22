@@ -20,6 +20,9 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_Mtp_registerJNI
 
 // Handles all types of exceptions that might be thrown in a location that there is no JNIEnv*
 void handleException(const char* type, const char* name, HRESULT hr);
+
+void HandleDeviceClosed(jstring deviceName, jstring deviceID, HRESULT hr);
+
 // Converts Unsinged Long to Java BigInterger (Note to Self: since Java 8 added support for unsigned longs Long#parseUnsignedLong)
 jobject ConvertUnsignedLongLongToJava(JNIEnv* env, ULONGLONG number);
 

@@ -44,11 +44,25 @@ void handleException(const char* type, const char* msg, HRESULT hr)
 		env->ThrowNew(generalPortableDeviceException, oss.str().c_str());
 	}
 	else if (type == "COM") {
-		jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/ComException");
-		env->NewObject(deviceClosedException, env->GetMethodID(deviceClosedException, "<init>", "(Ljava/lang/String;I)V"), env->NewStringUTF(oss.str().c_str()), hr);
+		jclass comException = env->FindClass("com/github/hms11rn/mtp/ComException");
+		env->NewObject(comException, env->GetMethodID(comException, "<init>", "(Ljava/lang/String;I)V"), env->NewStringUTF(oss.str().c_str()), hr);
 	}
+ 
 }
 
+void HandleDeviceClosed(jstring deviceName, jstring deviceID, HRESULT hr) {
+
+    JNIEnv* env = getEnv();
+    ostringstream oss;
+
+    const char* nameJava = env->GetStringUTFChars(deviceName, nullptr);
+    jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/DeviceClosedException");
+
+
+    oss << nameJava << " is closed, try calling PortableDevice#open()";
+    env->ThrowNew(deviceClosedException, oss.str().c_str());
+    
+}
 jobject ConvertUnsignedLongLongToJava(JNIEnv* env, ULONGLONG number)
 {
 	jbyteArray buffer;
@@ -93,12 +107,13 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
         // key for java return value: format {guid}pid
         jstring keyJava = env->NewString((jchar*)s.c_str(), wcslen(s.c_str()));
 
-        CoTaskMemFree(pszName); // pszName is no longer needed, free memory
+        CoTaskMemFree(pszName); // pszName is no longer needed, free memory 
         s.clear(); // s is no longer need as java key was created
 
         PROPVARIANT valueAt; // value of key
         hr = values->GetValue(keyName, &valueAt);
         VARTYPE valueType = valueAt.vt;
+        // Check vartype and convert it accordingly to java
         switch (valueType) {
         case VT_LPWSTR: {
             LPWSTR valueAtStr = nullptr;
@@ -168,8 +183,7 @@ jobject GetKeyAndValuesMap(JNIEnv* env, IPortableDeviceKeyCollection* keys, IPor
             break;
         }
         }
-
-    }
+  }
     env->DeleteLocalRef(mapClass);
     return hashMap;
 }

@@ -21,6 +21,7 @@ IPortableDeviceValues* pClientValues;
 IPortableDeviceKeyCollection* pKeyCollection;
 IPortableDevicePropVariantCollection* propVariantCollections;
 IPortableDeviceService* pService;
+
 IPortableDeviceContent2* pContent2;
 
 PortableDeviceContentJ* content;
@@ -208,16 +209,21 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
 }
 
 JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getProperties
-(JNIEnv* env, jclass, jstring objectID) {
-
+(JNIEnv* env, jobject obj, jstring objectID) {
     HRESULT hr;
 
     IPortableDeviceContent* pContent;
+
+    pContent = content->getContent();
+    if (pContent == nullptr) {
+        HandleDeviceClosed(env->NewStringUTF(""), env->NewStringUTF(""), E_WPD_DEVICE_NOT_OPEN);
+        return nullptr;
+    }
     IPortableDevice* pDevice;
     LPWSTR wsObjectID;
     wsObjectID = (WCHAR*) env->GetStringChars(objectID, nullptr);
     pDevice = getPortableDevice();
-    pContent = content->getContent();
+ 
     hr = pContent->Properties(&pProperties);
     if (FAILED(hr)) {
         if (hr == E_WPD_DEVICE_NOT_OPEN || hr == E_POINTER) {
@@ -315,7 +321,6 @@ HRESULT OpenDevice(LPCWSTR wszPnPDeviceID, IPortableDevice** ppDevice, LPCWSTR c
             cerr << "Failed to open portable device" << endl;
         }
     }
-
     return hr;
 }
 JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_openN
@@ -354,7 +359,7 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_ope
     }
     content = new PortableDeviceContentJ(pContent);
 
-    env->ReleaseStringChars(jsDeviceID, (jchar*)wszDeviceID);;
+    env->ReleaseStringChars(jsDeviceID, (jchar*)wszDeviceID);
 }
 
 JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_closeN
@@ -409,9 +414,12 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_clo
 
 JNIEXPORT jobject JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getObjectsN
 (JNIEnv* env, jobject cls, jstring objIdJava) {
-
+    // Load in pProperties
+    jobject j = Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_getProperties(env, nullptr, env->NewStringUTF("DEVICE"));
+    if (j == nullptr) {
+        return nullptr;
+    }
     return content->getObjects(env, cls, objIdJava);
-
 }
 
 JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_addFileObjectN
@@ -429,10 +437,7 @@ JNIEXPORT jstring JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_
     if (hr == E_POINTER || hr == E_WPD_DEVICE_NOT_OPEN) {
         jfieldID fid = env->GetFieldID(env->GetObjectClass(cls), "deviceID", "Ljava/lang/String;");
         jstring jsDeviceID = (jstring)env->GetObjectField(cls, fid);
-        jclass deviceClosedException = env->FindClass("com/github/hms11rn/mtp/DeviceClosedException");
-        jstring friendlyName = getFriendlyName(env, jsDeviceID);
-        string devIdChar = env->GetStringUTFChars(friendlyName, nullptr);
-        env->ThrowNew(deviceClosedException, devIdChar.append(" is not opened. use PortableDevice#open() to open").c_str());
+        HandleDeviceClosed(getFriendlyName(env, jsDeviceID), jsDeviceID, hr);
         env->DeleteLocalRef(jsDeviceID);
     }
 
@@ -493,7 +498,9 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_cop
 
     wszObjectID = (WCHAR*)env->GetStringChars(id, nullptr);
     wszPath = (WCHAR*)env->GetStringChars(path, nullptr);
+
     content->copyObjectToFile(env, wszObjectID, wszPath);
+
     env->ReleaseStringChars(id, (jchar*)wszObjectID);
     env->ReleaseStringChars(path, (jchar*)wszPath);
 
@@ -501,7 +508,9 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_cop
 
                                                                   
 JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_updatePropertyN(JNIEnv* env, jobject, jstring id, jstring fmtid, jint pid, jint varType, jstring value)
-{
+{   
+    HRESULT hr;
+
     LPWSTR wszObjectID;
     LPWSTR wszGuid;
     LPWSTR wszValue;
@@ -510,7 +519,10 @@ JNIEXPORT void JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin32_upd
     wszObjectID = (WCHAR*)env->GetStringChars(id, nullptr);
     wszGuid = (WCHAR*)env->GetStringChars(fmtid, nullptr);
     wszValue = (WCHAR*)env->GetStringChars(value, nullptr);
-    CLSIDFromString(wszGuid, &guid);
+    hr = CLSIDFromString(wszGuid, &guid);
+    if (FAILED(hr)) {
+        cout << "Invalid GUID" << endl;
+    }
     content->updateProperty(env, wszObjectID, guid, pid, varType, wszValue);
     env->ReleaseStringChars(id, (jchar*)wszObjectID);
     env->ReleaseStringChars(fmtid, (jchar*)wszGuid);
@@ -545,13 +557,25 @@ JNIEXPORT jbyteArray JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceWin
     return bArr;
 }
 
-JNIEXPORT jint JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceOutputStreamWin32_writeBuffer(JNIEnv* env, jobject, jstring id, jbyteArray buffer, jint bufferSize, jboolean append, jboolean rewrite)
+JNIEXPORT jint JNICALL Java_com_github_hms11rn_mtp_win32_PortableDeviceOutputStreamWin32_writeBuffer(JNIEnv* env, jobject, jstring id, jbyteArray buffer, jint bufferSize, jboolean append, jboolean rewrite, jobject sbuilder)
 {
     LPWSTR wszObjectID;
+    LPWSTR wszNewObjectID;
+    jstring newObjectID;
+
     wszObjectID = (WCHAR*)env->GetStringChars(id, nullptr);
 
     jbyte* elements = env->GetByteArrayElements(buffer, nullptr);
-    DWORD bytesWritten = content->writeBytes(env, wszObjectID, (BYTE*) elements, bufferSize, append, rewrite);
+    DWORD bytesWritten = content->writeBytes(env, wszObjectID, (BYTE*) elements, bufferSize, append, rewrite, &wszNewObjectID);
+    if (wszNewObjectID != nullptr) {
+        newObjectID = env->NewString((jchar*)wszNewObjectID, wcslen(wszNewObjectID));
+        jclass strBuilderClass = env->GetObjectClass(sbuilder);
+        jmethodID appendMethod = env->GetMethodID(strBuilderClass, "append", "(Ljava/lang/String;)Ljava/lang/StringBuilder;");
+        jvalue* v = new jvalue[1];
+        v[0].l = newObjectID;
+        env->CallObjectMethodA(sbuilder, appendMethod, v);
+    }
     env->ReleaseStringChars(id, (jchar*)wszObjectID);
+  
     return bytesWritten;
 }

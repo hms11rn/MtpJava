@@ -28,7 +28,6 @@ IPortableDeviceKeyCollection* PortableDeviceContentJ::getContentTypeKey() {
 		}
 		contentTypeKey->Add(WPD_OBJECT_CONTENT_TYPE);
 		contentTypeKey->Add(WPD_FUNCTIONAL_OBJECT_CATEGORY);
-		return contentTypeKey;
 	}
 	return contentTypeKey;
 }
@@ -117,10 +116,12 @@ jobject PortableDeviceContentJ::getObjects(JNIEnv* env, jobject cls, jstring par
 	deviceIDField = env->GetFieldID(env->GetObjectClass(cls), "deviceID", "Ljava/lang/String;");
 	jdeviceID = (jstring)env->GetObjectField(cls, deviceIDField);
 
+
 	wszDeviceID = (WCHAR*)env->GetStringChars(jdeviceID, nullptr);
 	objId = (WCHAR*)env->GetStringChars(parentID, nullptr);
-
+	
 	hr = pContent->EnumObjects(0, objId, nullptr, &pEnum);
+	
 	if (FAILED(hr)) {
 		env->ReleaseStringChars(jdeviceID, (jchar*)wszDeviceID);
 		if (hr == E_POINTER || hr == E_WPD_DEVICE_NOT_OPEN) {
@@ -133,12 +134,10 @@ jobject PortableDeviceContentJ::getObjects(JNIEnv* env, jobject cls, jstring par
 		return nullptr;
 
 	}
-
 	DWORD dwFetched = 0;
 	LPWSTR szObjectID = nullptr;
 	jstring idJava;
 	jstring contentTypeJava;
-
 	while (SUCCEEDED(pEnum->Next(1, &szObjectID, &dwFetched)) && (dwFetched > 0)) {
 		IPortableDeviceValues* contentTypeValue;
 		IPortableDeviceProperties* pProperties = getPortableDeviceProperties();
@@ -196,7 +195,6 @@ BOOL PortableDeviceContentJ::deleteFile(LPWSTR idd, int recursion)
 	PROPVARIANT resultPropVariant;
 
 	result->GetAt(0, &resultPropVariant); // Index 0 is a SCODE
-	result->GetAt(0, &resultPropVariant); // Index 0 is an SCODE
 
 	SCODE resultSCODE = resultPropVariant.scode;
 	return resultSCODE == S_OK;
@@ -324,8 +322,9 @@ jstring PortableDeviceContentJ::addObjectFromFile(JNIEnv* env, LPWSTR parent, js
 		{
 			if (hr == E_POINTER) {
 				*result = E_POINTER;
+				return nullptr;
 			}
-			// Handle error
+			cout << "Failed to create Object With properties and Data, HRESULT = 0x" << std::hex << endl << endl;
 			return nullptr;
 		}
 	}
@@ -430,8 +429,8 @@ jstring PortableDeviceContentJ::addFolderObject(JNIEnv* env, LPWSTR wszName, LPW
 	values->SetStringValue(WPD_OBJECT_ORIGINAL_FILE_NAME, wszName);
 	values->SetGuidValue(WPD_OBJECT_CONTENT_TYPE, WPD_CONTENT_TYPE_FOLDER);
 	hr = pContent->CreateObjectWithPropertiesOnly(values, &outID);
-	if (!SUCCEEDED(hr)) {
-		// handle error
+	if (FAILED(hr) || outID == nullptr) {
+		handleException("DEVICE", "Failed to create Folder Object", hr);
 		return nullptr;
 	}
 	outIDJava = env->NewString((jchar*)outID, wcslen(outID));
@@ -454,14 +453,16 @@ void PortableDeviceContentJ::copyObjectToFile(JNIEnv* env, LPWSTR id, LPWSTR out
 	if (SUCCEEDED(hr)) {
 		hr = SHCreateStreamOnFileEx(outDir, STGM_CREATE | STGM_WRITE, 0, true, nullptr, &pFileStream);
 		if (FAILED(hr)) {
-			cout << "Failed to create file stream, HRESULT: " << std::hex << hr << endl;
+			cout << "Failed to create file stream, HRESULT: 0x" << std::hex << hr << endl;
 			return;
 		}
 	DWORD cbTotalBytesWritten = 0;
 	hr = StreamCopy(pFileStream, pObjectStream, optimalBufferSize, &cbTotalBytesWritten);
 	if (FAILED(hr)) {
+		cout << "Failed to copy Object Stream to File Stream, HRESULT = 0x" << std::hex << hr << endl;
 		return;
 	}
+	fflush(nullptr);
 	}
 
 }
@@ -501,18 +502,20 @@ BYTE* PortableDeviceContentJ::getBytes(JNIEnv* env, LPWSTR id, DWORD* size) {
 		}
 		if (FAILED(hr))
 		{
-			printf("! Failed to read %d bytes from the source stream, hr = 0x%lx\n", optimalBufferSize, hr);
+			printf("Failed to read % d bytes from the source stream, hr = 0x % lx\n", optimalBufferSize, hr);
 		}
 		 } while (SUCCEEDED(hr) && (cbBytesRead > 0));
-		pResources->Release(); // TODO check if creates error
+		pResources->Release();
 		return pObjectData;
 
 	}
 	return nullptr;
 }
 
-DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, DWORD dwBufferSize, BOOL append, DWORD rewrite)
+DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, DWORD dwBufferSize, BOOL append, DWORD rewrite, LPWSTR* newObjectID)
 {	
+	*newObjectID = nullptr;
+
 	HRESULT hr;
 	DWORD dwOptimalBufferSize = 0;
 	DWORD dwBytesWritten = 0;
@@ -521,9 +524,9 @@ DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, D
 		
 	CComPtr<IStream> pObjectStream;
 	CComPtr<IStream> pDeviceStream;
-
+	CComPtr<IPortableDeviceDataStream> pDeviceDataStream = nullptr;
 	IPortableDeviceResources* pResources = nullptr;
-
+	
 	if (append) {
 		DWORD dwObjectDataLength = 0;
 		BYTE* pObjectData = getBytes(env, id, &dwObjectDataLength);
@@ -538,7 +541,7 @@ DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, D
 	else
 		newBuf = buffer;
 
-	if (rewrite == 3) {
+	if (rewrite == 2) {
 		IPortableDeviceKeyCollection* pKeyCol;
 		IPortableDeviceValues* pValues;
 		IPortableDeviceProperties* pProperties = getPortableDeviceProperties();
@@ -546,22 +549,22 @@ DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, D
 		hr = pProperties->GetSupportedProperties(id, &pKeyCol);
 		hr = pProperties->GetValues(id, pKeyCol, &pValues);
 		pValues->SetUnsignedIntegerValue(WPD_OBJECT_SIZE, dwBufferSize);
-
+		/// Unfinished
 	}
 
 	if (rewrite == 1) {
 
 		IPortableDeviceProperties* pProperties = getPortableDeviceProperties();
-
 		IPortableDeviceKeyCollection* pKeyCol;
 		IPortableDeviceValues* pValues;
+
 		pProperties->GetSupportedProperties(id, &pKeyCol);
 		pProperties->GetValues(id, pKeyCol, &pValues);
 		pValues->SetUnsignedIntegerValue(WPD_OBJECT_SIZE, dwBufferSize);
 		deleteFile(id, PORTABLE_DEVICE_DELETE_NO_RECURSION);
 		hr = pContent->CreateObjectWithPropertiesAndData(pValues, &pDeviceStream, &dwOptimalBufferSize, nullptr);
 		if (SUCCEEDED(hr)) {
-			hr = pDeviceStream->QueryInterface(IID_IPortableDeviceDataStream, (void**)&pObjectStream);
+			hr = pDeviceStream->QueryInterface(IID_IPortableDeviceDataStream, (void**)&pDeviceDataStream);
 			if (hr == 0x80070050) {
 				jclass generalPortableDeviceException = env->FindClass("com/github/hms11rn/mtp/PortableDeviceException");
 				env->ThrowNew(generalPortableDeviceException, "Could not write to file (Does that file already exist?)");
@@ -569,6 +572,8 @@ DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, D
 				pValues->Release();
 				return -1;
 			}
+			pObjectStream = pDeviceDataStream;
+			
 		}
 		else {
 			pKeyCol->Release();
@@ -588,10 +593,10 @@ DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, D
 		}
 		hr = pResources->GetStream(id, WPD_RESOURCE_GENERIC, STGM_READWRITE, &dwOptimalBufferSize, &pObjectStream);
 		if (FAILED(hr)) {
-			printf("Failed to get Stream hr = 0x%lx\n", hr);
 			pResources->Release();
 			if (hr == E_ACCESSDENIED)
 				return -3;
+			printf("Failed to get Stream hr = 0x%lx\n", hr);
 			// handle error (???)
 			return -1;
 		}
@@ -602,6 +607,12 @@ DWORD PortableDeviceContentJ::writeBytes(JNIEnv* env, LPWSTR id, BYTE* buffer, D
 	hr = pObjectStream->Write(newBuf, dwBufferSize, &dwBytesWritten);
 	if (SUCCEEDED(hr)) {
 		pObjectStream->Commit(STGC_DEFAULT);
+		LPWSTR pd = nullptr;
+		if (pDeviceDataStream != nullptr) {
+			pDeviceDataStream->GetObjectID(&pd);
+			*newObjectID = pd;
+		}
+		
 		if (pResources != nullptr)
 			pResources->Release();
 		return dwBytesWritten;
@@ -685,7 +696,6 @@ HRESULT StreamCopy(IStream* pDestStream, IStream* pSourceStream, DWORD cbTransfe
 	else
 	{
 		printf("! Failed to allocate %d bytes for the temporary transfer buffer.\n", cbTransferSize);
-
 		return hr;
 	}
 	return hr;

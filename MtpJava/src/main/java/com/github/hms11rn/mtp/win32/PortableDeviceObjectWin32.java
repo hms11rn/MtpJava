@@ -20,7 +20,7 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
 
 
     Map<String, DeviceProperties.PropertyValue> properties;
-    final String id;
+    String id;
     final PortableDeviceContentWin32 content;
     /**
      * Used to convert c++ string date to {@link java.util.Date}
@@ -40,6 +40,9 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
         return isContainerN(id);
     }
 
+    protected void setID(String id) {
+        this.id = id;
+    }
     /**
      * static method to avoid async between jni and constructor call
      * @param id device id
@@ -48,7 +51,6 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
     private native boolean isContainerN(String id);
     @Override
     public PortableDevice getDevice() {
-
         return content.device;
     }
     private void loadProperties() {
@@ -246,7 +248,7 @@ class PortableDeviceObjectWin32 implements PortableDeviceObject {
      */
     @Override
     public OutputStream getOutputStream() {
-        return new PortableDeviceOutputStreamWin32(id, getDevice().getOutputStreamWriteMethod());
+        return new PortableDeviceOutputStreamWin32(id, this, getDevice().getOutputStreamWriteMethod());
     }
 
     /**

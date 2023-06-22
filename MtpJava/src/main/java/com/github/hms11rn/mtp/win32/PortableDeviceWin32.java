@@ -138,6 +138,7 @@ class PortableDeviceWin32 implements PortableDevice {
     @Override
     public PortableDeviceObject[] getRootObjects() {
         Map<String, String> objectsMap = getObjectsN(DeviceProperties.DEVICE_ROOT_ID);
+
         PortableDeviceObject[] objects = new PortableDeviceObject[objectsMap.size()];
         int i = 0;
         for (String id : objectsMap.keySet()) {
